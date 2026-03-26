@@ -55,6 +55,7 @@ app.post('/api/generate-asset', upload.fields([
     { name: 'bg', maxCount: 1 }
 ]), async (req, res) => {
     try {
+        console.log('Files received:', Object.keys(req.files || {}));
         const { prompt, format, leagueData: leagueDataRaw } = req.body;
         const leagueData = typeof leagueDataRaw === 'string' ? JSON.parse(leagueDataRaw) : (leagueDataRaw || {});
 
@@ -73,9 +74,18 @@ app.post('/api/generate-asset', upload.fields([
         };
 
         const getAssetBuffer = async (fieldName, defaultFile, targetLeague) => {
+            // Check for uploaded file first
             if (req.files && req.files[fieldName]) return req.files[fieldName][0].buffer;
 
-            // Branding prioritisation based on league
+            // Check if the body contains a filename (string) for this field
+            const bodyValue = req.body[fieldName];
+            if (typeof bodyValue === 'string' && bodyValue !== "" && !bodyValue.startsWith('data:')) {
+                const folder = fieldName.includes('logo') ? 'logos' : 'players';
+                const assetPath = path.join(__dirname, '..', 'public', 'assets', folder, bodyValue);
+                if (fs.existsSync(assetPath)) return fs.readFileSync(assetPath);
+            }
+
+            // Branding prioritisation based on league (Automatic Logos)
             if (fieldName === 'logo1' || fieldName === 'logo2') {
                 if (isUEFA) return getB('uefa_logo.png');
                 if (isZiraat) return getB('ziraat_logo.png');
@@ -94,7 +104,7 @@ app.post('/api/generate-asset', upload.fields([
         const brandBar = getB('nesine_brand_bar.png'); // Keep for old assets if needed
         const nesineLogo = getB('nesine_logo.png');
         const hemenOyna = getB('hemen_oyna.png');
-        const leagueLogo = isUEFA ? getB('uefa_logo.png') : (isZiraat ? getB('ziraat_logo.png') : null);
+        const leagueLogo = isZiraat ? getB('ziraat_logo.png') : (isUEFA ? getB('uefa_logo.png') : null);
 
         // ---------------------------------------------------------
         // 1200x628 BRANCH (Specific Refinement)
@@ -113,17 +123,7 @@ app.post('/api/generate-asset', upload.fields([
 
             const layers = [];
 
-            // 2. Radial Glows
-            if (isUEFA) {
-                const uGlow = Buffer.from(`<svg width="${width}" height="${height}"><defs><radialGradient id="rg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00FF00" stop-opacity="0.5"/><stop offset="100%" stop-color="#00FF00" stop-opacity="0"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#rg)"/></svg>`);
-                layers.push({ input: uGlow, top: 0, left: 0 });
-            } else if (isZiraat) {
-                const leftGlow = Buffer.from(`<svg width="${width}" height="${height}"><defs><radialGradient id="lg" cx="20%" cy="50%" r="40%"><stop offset="0%" stop-color="#CC0000" stop-opacity="0.3"/><stop offset="100%" stop-color="#CC0000" stop-opacity="0"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#lg)"/></svg>`);
-                const rightGlow = Buffer.from(`<svg width="${width}" height="${height}"><defs><radialGradient id="rgn" cx="80%" cy="50%" r="40%"><stop offset="0%" stop-color="#003580" stop-opacity="0.3"/><stop offset="100%" stop-color="#003580" stop-opacity="0"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#rgn)"/></svg>`);
-                layers.push({ input: leftGlow, top: 0, left: 0 }, { input: rightGlow, top: 0, left: 0 });
-            }
-
-            // 3. Players
+            // 2. Players (Glows removed)
             const p1B = await getAssetBuffer('player1', 'player.png');
             const p2B = await getAssetBuffer('player2', 'player.png');
             const processP = async (b, right) => {
@@ -152,28 +152,154 @@ app.post('/api/generate-asset', upload.fields([
                 const llW = 120;
                 layers.push({ input: await sharp(leagueLogo).resize({ width: llW, height: 120, fit: 'inside' }).toBuffer(), top: 30, left: Math.floor(width / 2 - llW / 2) });
             }
+            // Hemen Oyna — merkez, y:439
             if (hemenOyna) {
-                const hoW = 180;
-                layers.push({ input: await sharp(hemenOyna).resize({ width: hoW, height: 80, fit: 'inside' }).toBuffer(), top: height - 120, left: Math.floor(width / 2 - hoW / 2) });
-            }
-            if (nesineLogo) {
-                const nW = Math.floor(width * 0.12);
-                layers.push({ input: await sharp(nesineLogo).resize({ width: nW, height: 60, fit: 'inside' }).toBuffer(), top: Math.floor(height - 60), left: Math.floor(width / 2 - nW / 2) });
+                const hoW = 200;
+                const hoH = 63;
+                const hoResized = await sharp(hemenOyna).resize({ width: hoW, height: hoH, fit: 'inside' }).toBuffer();
+                const hoMeta = await sharp(hoResized).metadata();
+                layers.push({ 
+                    input: hoResized, 
+                    top: 439, 
+                    left: Math.floor(width / 2 - hoMeta.width / 2) 
+                });
             }
 
-            // 6. Typography
+            // Nesine sarı dikdörtgen + logo — merkez, y:526
+            // Nesine sarı dikdörtgen + logo — merkez, y:526
+            const nesineBoxW = 280;
+            const nesineBoxH = 102;
+            const nesineBoxX = Math.floor(width / 2 - nesineBoxW / 2);
+            const nesineBoxY = 526;
+
+            // League-specific radius and logo size (Ziraat now sharp and large logo per user request)
+            const nesineRadius = 0; 
+            const nesineLogoWidth = 240;
+
+            const yellowBox = Buffer.from(`<svg width="${width}" height="${height}">
+                <rect x="${nesineBoxX}" y="${nesineBoxY}" width="${nesineBoxW}" height="${nesineBoxH}" 
+                      rx="${nesineRadius}" ry="${nesineRadius}" fill="#F5C300" stroke="none"/>
+            </svg>`);
+            layers.push({ input: yellowBox, top: 0, left: 0 });
+
+            if (nesineLogo) {
+                const nW = nesineLogoWidth;
+                const nH = 80; // Increased height to match larger width
+                const nResized = await sharp(nesineLogo).resize({ width: nW, height: nH, fit: 'inside' }).toBuffer();
+                const nMeta = await sharp(nResized).metadata();
+                layers.push({ 
+                    input: nResized, 
+                    top: Math.floor(nesineBoxY + nesineBoxH / 2 - nMeta.height / 2), 
+                    left: Math.floor(width / 2 - nMeta.width / 2) 
+                });
+            }
+
+            // 6. Typography - Exact PSD Alignment (Ziraat 1200x628 with native system fonts)
             const team1 = leagueData.team1 || "TAKIM A";
             const team2 = leagueData.team2 || "TAKIM B";
-            const svgT = Buffer.from(`<svg width="${width}" height="${height}">
-                <style>
-                    .z-t { fill: #000; font-family: sans-serif; font-size: 64px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
-                    .z-i { fill: #444; font-family: sans-serif; font-size: 36px; font-weight: 700; letter-spacing: 1px; }
-                </style>
-                <text x="50%" y="${height / 2 - 40}" text-anchor="middle" class="z-t">${team1}</text>
-                <text x="50%" y="${height / 2 + 30}" text-anchor="middle" class="z-t">${team2}</text>
-                <text x="50%" y="${height / 2 + 80}" text-anchor="middle" class="z-i">${leagueData.day || 'PAZAR'} ${leagueData.hour || '20:30'}</text>
+            
+            const fontStyle = `
+                .z-t { fill: #000; font-family: 'Teko'; font-size: 52px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+                .z-i { fill: #444; font-family: 'Montserrat'; font-size: 32px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+            `;
+
+            // Teams Box: Top 196, Left 364, Width 472, Height 113
+            const svgTeams = Buffer.from(`<svg width="472" height="113">
+                <style>${fontStyle}</style>
+                <text x="50%" y="45" text-anchor="middle" class="z-t">${team1}</text>
+                <text x="50%" y="95" text-anchor="middle" class="z-t">${team2}</text>
             </svg>`);
-            layers.push({ input: svgT, top: 0, left: 0 });
+            layers.push({ input: svgTeams, top: 196, left: 364 });
+
+            // Info Box (Day/Hour): Top 344, Left 506, Width 189, Height 71
+            const svgInfo = Buffer.from(`<svg width="189" height="71">
+                <style>${fontStyle}</style>
+                <text x="50%" y="45" text-anchor="middle" class="z-i">${leagueData.day || 'PAZAR'} ${leagueData.hour || '20:30'}</text>
+            </svg>`);
+            layers.push({ input: svgInfo, top: 344, left: 506 });
+
+            const final = await canvas.composite(layers).png().toBuffer();
+            return res.json({ success: true, imageUrl: `data:image/png;base64,${final.toString('base64')}` });
+        }
+
+        if (width === 120 && height === 600) {
+            // 1. Background
+            const bgB = await getAssetBuffer('bg', 'bg.png');
+            let canvas;
+            if (bgB) {
+                canvas = sharp(bgB).resize(width, height, { fit: 'cover' });
+            } else {
+                canvas = sharp(Buffer.from(`<svg width="120" height="600">
+                    <rect width="100%" height="100%" fill="#F2F2F2"/>
+                    <defs>
+                        <pattern id="p" width="15" height="15" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                            <line x1="0" y1="0" x2="0" y2="15" stroke="#E0E0E0" stroke-width="1.5"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#p)"/>
+                </svg>`));
+            }
+
+            const layers = [];
+
+            // 2. League Logo - Top (PSD: 28, 41, 41, 54)
+            const leagueL = isZiraat ? getB('ziraat_logo.png') : null;
+            if (leagueL) {
+                layers.push({ input: await sharp(leagueL).resize(41, 54).toBuffer(), top: 28, left: 41 });
+            }
+
+            // 3. Players - (PSD Group Top: 163, Left: 2, Width: 116)
+            const p1B = await getAssetBuffer('player1', 'player1.png');
+            const p2B = await getAssetBuffer('player2', 'player2.png');
+            console.log('p1B exists:', !!p1B, 'p2B exists:', !!p2B);
+            if (p1B) layers.push({ input: await sharp(p1B).resize(57, 77).toBuffer(), top: 163, left: 2 });
+            if (p2B) layers.push({ input: await sharp(p2B).resize(57, 77).toBuffer(), top: 163, left: 61 });
+
+            // 4. Team Logos - (PSD Top: 229, Left: 13 & 69)
+            const l1B = await getAssetBuffer('logo1', 'logo1.png');
+            const l2B = await getAssetBuffer('logo2', 'logo2.png');
+            if (l1B) layers.push({ input: await sharp(l1B).resize(36, 42, { fit: 'inside' }).toBuffer(), top: 229, left: 13 });
+            if (l2B) layers.push({ input: await sharp(l2B).resize(43, 43, { fit: 'inside' }).toBuffer(), top: 229, left: 69 });
+
+            // 5. Typography - PSD Alignment (Teams: 309, Info: 372)
+            const team1 = leagueData.team1 || 'TAKIM A';
+            const team2 = leagueData.team2 || 'TAKIM B';
+            const day = leagueData.day || 'PAZAR';
+            const hour = leagueData.hour || '20:30';
+
+            const svgText = Buffer.from(`<svg width="120" height="600">
+                <style>
+                    .tn { fill: #000; font-family: 'Teko'; font-size: 14px; font-weight: 700; text-transform: uppercase; }
+                    .hr { fill: #000; font-family: 'Montserrat'; font-size: 24px; font-weight: 900; }
+                    .dy { fill: #444; font-family: 'Montserrat'; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+                </style>
+                <text x="60" y="322" text-anchor="middle" class="tn">${team1}</text>
+                <text x="60" y="338" text-anchor="middle" class="tn">${team2}</text>
+                <text x="60" y="388" text-anchor="middle" class="hr">${hour}</text>
+                <text x="60" y="405" text-anchor="middle" class="dy">${day}</text>
+            </svg>`);
+            layers.push({ input: svgText, top: 0, left: 0 });
+
+            // 6. Hemen Oyna - (PSD Top: 460, Left: 19, Width: 83)
+            const hoB = getB('hemen_oyna.png');
+            if (hoB) {
+                layers.push({ input: await sharp(hoB).resize(83, 25).toBuffer(), top: 460, left: 19 });
+            }
+
+            // 7. Nesine Box - (PSD Top: 542, Left: 0, Width: 120)
+            const nesineBox = Buffer.from(`<svg width="120" height="70"><rect width="120" height="70" fill="#F5C300"/></svg>`);
+            layers.push({ input: nesineBox, top: 542, left: 0 });
+
+            const nLogo = getB('nesine_logo.png');
+            if (nLogo) {
+                const nResized = await sharp(nLogo).resize(78, 38).toBuffer();
+                const nMeta = await sharp(nResized).metadata();
+                layers.push({ 
+                    input: nResized, 
+                    top: Math.floor(565 - nMeta.height / 2), 
+                    left: 22 
+                });
+            }
 
             const final = await canvas.composite(layers).png().toBuffer();
             return res.json({ success: true, imageUrl: `data:image/png;base64,${final.toString('base64')}` });
@@ -373,6 +499,22 @@ app.post('/api/generate-interactive', upload.fields([
 
     } catch (e) {
         console.error(e);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.get('/api/assets', (req, res) => {
+    try {
+        const logosDir = path.join(__dirname, '..', 'public', 'assets', 'logos');
+        const playersDir = path.join(__dirname, '..', 'public', 'assets', 'players');
+        
+        const getFiles = (dir) => fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => !f.startsWith('.')) : [];
+        
+        res.json({
+            logos: getFiles(logosDir),
+            players: getFiles(playersDir)
+        });
+    } catch (e) {
         res.status(500).json({ success: false, error: e.message });
     }
 });
