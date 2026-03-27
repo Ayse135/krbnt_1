@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nesine AI Banner Studio - Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bg-nesine-yellow {
+            background-color: #ffd000;
+        }
+
+        .text-nesine-yellow {
+            color: #ffd000;
+        }
+
+        .border-nesine-yellow {
+            border-color: #fccc04;
+        }
+
+        .shadow-soft {
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        .shadow-inner-soft {
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .pulse-loader {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .pulse-loader div {
+            position: absolute;
+            border: 4px solid #ffd000;
+            opacity: 1;
+            border-radius: 50%;
+            animation: pulse-loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        }
+
+        .pulse-loader div:nth-child(2) {
+            animation-delay: -0.5s;
+        }
+
+        @keyframes pulse-loader {
+            0% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 0;
+            }
+
+            4.9% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 0;
+            }
+
+            5% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+
+            100% {
+                top: 0px;
+                left: 0px;
+                width: 72px;
+                height: 72px;
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 bg-nesine-yellow rounded-xl flex items-center justify-center font-black text-2xl tracking-tighter shadow-md">
+                    N
+                </div>
+                <div>
+                    <h1 class="font-black text-2xl tracking-tight text-gray-900 leading-none">Nesine <span
+                            class="text-gray-400 font-light">Studio</span></h1>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-1">AI Automated Production
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-200">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="text-xs font-bold">System Online</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-10 flex flex-col lg:flex-row gap-10 min-h-[calc(100vh-80px)]">
+
+        <!-- Left Panel: Controls -->
+        <section class="lg:w-1/3 flex flex-col gap-6">
+            <div class="bg-white rounded-3xl p-8 shadow-soft border border-gray-100 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 to-nesine-yellow"></div>
+
+                <h2 class="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                        </path>
+                    </svg>
+                    Data Input
+                </h2>
+
+                <form id="gen-form" class="space-y-6">
+
+                    <!-- Team Selection -->
+                    <div class="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest">Match
+                            Config</label>
+
+                        <div class="flex items-center gap-3 w-full">
+                            <select id="team_1" name="team_1"
+                                class="flex-1 bg-white border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow block p-3 shadow-sm font-semibold transition">
+                                <option value="BEŞİKTAŞ">Beşiktaş</option>
+                                <option value="GALATASARAY">Galatasaray</option>
+                                <option value="FENERBAHÇE">Fenerbahçe</option>
+                                <option value="TRABZONSPOR">Trabzonspor</option>
+                                <option value="RİZESPOR">Rizespor</option>
+                            </select>
+                            <span class="font-black text-gray-400 text-sm">VS</span>
+                            <select id="team_2" name="team_2"
+                                class="flex-1 bg-white border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow block p-3 shadow-sm font-semibold transition">
+                                <option value="GALATASARAY">Galatasaray</option>
+                                <option value="BEŞİKTAŞ">Beşiktaş</option>
+                                <option value="FENERBAHÇE" selected>Fenerbahçe</option>
+                                <option value="TRABZONSPOR">Trabzonspor</option>
+                                <option value="SAMSUNSPOR">Samsunspor</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Player Selection -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Player 1 (L)</label>
+                            <select id="player_1_id" name="player_1_id"
+                                class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow block w-full p-3 shadow-sm font-semibold transition">
+                                <option value="1">Player 1</option>
+                                <option value="4" selected>Player 4</option>
+                                <option value="3">Player 3</option>
+                                <option value="2">Player 2</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Player 2 (R)</label>
+                            <select id="player_2_id" name="player_2_id"
+                                class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow block w-full p-3 shadow-sm font-semibold transition">
+                                <option value="2" selected>Player 2</option>
+                                <option value="5">Player 5</option>
+                                <option value="1">Player 1</option>
+                                <option value="6">Player 6</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+                    <!-- Date & Time -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Date</label>
+                            <input type="text" id="day" name="day" value="PAZARTESİ"
+                                class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow block w-full p-3 shadow-inner-soft font-semibold transition text-center">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Time</label>
+                            <input type="text" id="hour" name="hour" value="20:30"
+                                class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow block w-full p-3 shadow-inner-soft font-bold text-center text-lg transition">
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="pt-6 border-t border-gray-100">
+                        <button type="button" id="btn-generate" onclick="startGeneration()"
+                            class="w-full bg-nesine-yellow hover:bg-yellow-400 text-gray-900 font-black rounded-2xl text-lg px-5 py-5 text-center shadow-lg transition-all transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 flex items-center justify-center gap-3">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Generate All Assets
+                        </button>
+                        <p class="text-center text-xs text-gray-400 mt-4 font-medium px-4">Assets will be requested from
+                            the static template layers via the backend rendering engine.</p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Process Log -->
+            <div class="bg-white rounded-3xl p-6 shadow-soft border border-gray-100 flex-1">
+                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h7"></path>
+                    </svg>
+                    System Log
+                </h3>
+                <div id="log-container" class="space-y-3 font-mono text-xs max-h-48 overflow-y-auto">
+                    <div class="text-gray-400">System idle. Ready for input.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel: Output Viewer -->
+        <section
+            class="lg:w-2/3 bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden flex flex-col relative">
+
+            <div class="bg-gray-50 px-8 py-5 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-nesine-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    Output Studio
+                </h2>
+
+                <div class="flex gap-2" id="dl-buttons" style="display:none;">
+                    <button
+                        class="text-sm font-semibold bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 transition shadow-sm">Download
+                        Assets</button>
+                </div>
+            </div>
+
+            <!-- Empty / Loading State -->
+            <div id="output-empty"
+                class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-gray-50/50">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-700 mb-2">No Generation Yet</h3>
+                <p class="text-gray-500 max-w-sm mx-auto">Click the generate button to process layers and render the
+                    final promotional assets.</p>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loading"
+                class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex flex-col justify-center items-center"
+                style="display: none;">
+                <div class="pulse-loader mb-6">
+                    <div></div>
+                    <div></div>
+                </div>
+                <h2 class="text-2xl font-black text-gray-900 mb-2">Compositing Layers...</h2>
+                <p class="text-gray-500 font-medium" id="loading-text">Assembling PNG and GIF assets</p>
+            </div>
+
+            <!-- Output Grid -->
+            <div id="result-container" class="p-8 flex-1 overflow-y-auto bg-gray-50/50 relative"
+                style="display: none;">
+                
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                    
+                    <!-- 1200x628 Card -->
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col slide-up h-[500px]" style="animation-delay: 0.1s;">
+                        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded border border-blue-200 uppercase tracking-tighter shadow-sm">1200x628</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="generateSize('1200x628')" title="Yenile" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                </button>
+                                <button onclick="downloadImage('img_1200x628', 'ziraat_1200x628.png')" title="İndir" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-blue-500 bg-blue-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6 flex flex-col h-full space-y-6 relative overflow-hidden">
+                            <!-- Local Card Loader -->
+                            <div id="loader_1200x628" class="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex items-center justify-center hidden transition-all duration-300 rounded-[2rem]">
+                                <div class="pulse-loader scale-75"><div></div><div></div></div>
+                            </div>
+
+                            <textarea id="prompt_1200x628" rows="4" class="w-full bg-gray-50 border-none rounded-2xl p-4 text-xs font-medium text-gray-600 focus:ring-1 focus:ring-nesine-yellow transition resize-none flex-shrink-0"
+                                placeholder="Ziraat Türkiye Kupası..."></textarea>
+                            <div onclick="zoomImage('img_1200x628')" class="bg-gray-50 flex-1 border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden shadow-inner group cursor-zoom-in">
+                                <img id="img_1200x628" src="" class="hidden w-full h-full object-contain">
+                                <div id="empty_1200x628" class="text-gray-300 flex flex-col items-center gap-2">
+                                    <svg class="w-8 h-8 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <span class="text-[10px] font-black uppercase tracking-widest opacity-40">Awaiting Signal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 120x600 Card -->
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col slide-up h-[500px]" style="animation-delay: 0.2s;">
+                        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded border border-green-200 uppercase tracking-tighter">120x600</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="generateSize('120x600')" title="Yenile" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                </button>
+                                <button onclick="downloadImage('img_120x600', 'ziraat_120x600.png')" title="İndir" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-green-500 bg-green-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6 flex flex-col h-full space-y-6 relative overflow-hidden">
+                            <!-- Local Card Loader -->
+                            <div id="loader_120x600" class="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex items-center justify-center hidden transition-all duration-300 rounded-[2rem]">
+                                <div class="pulse-loader scale-50"><div></div><div></div></div>
+                            </div>
+
+                            <textarea id="prompt_120x600" rows="3" class="w-full bg-gray-50 border-none rounded-2xl p-4 text-xs font-medium text-gray-600 focus:ring-1 focus:ring-nesine-yellow transition resize-none flex-shrink-0"
+                                placeholder="Dikey Banner Kurallar..."></textarea>
+                            <div onclick="zoomImage('img_120x600')" class="bg-gray-50 flex-1 border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden shadow-inner group cursor-zoom-in">
+                                <img id="img_120x600" src="" class="hidden w-full h-full object-contain">
+                                <div id="empty_120x600" class="text-gray-300 flex flex-col items-center gap-2">
+                                    <svg class="w-8 h-8 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    <span class="text-[10px] font-black uppercase tracking-widest opacity-40">Ready to Render</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 320x100 Card -->
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col slide-up h-[400px]" style="animation-delay: 0.3s;">
+                        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded border border-purple-200 uppercase tracking-tighter">320x100</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="generateSize('320x100')" title="Yenile" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                </button>
+                                <button onclick="downloadImage('img_320x100', 'ziraat_320x100.gif')" title="İndir" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-purple-500 bg-purple-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6 flex flex-col h-full space-y-4 relative overflow-hidden">
+                            <!-- Local Card Loader -->
+                            <div id="loader_320x100" class="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex items-center justify-center hidden transition-all duration-300 rounded-[2rem]">
+                                <div class="pulse-loader scale-50"><div></div><div></div></div>
+                            </div>
+
+                            <textarea id="prompt_320x100" rows="3" class="w-full bg-gray-50 border-none rounded-2xl p-4 text-xs font-medium text-gray-600 focus:ring-1 focus:ring-nesine-yellow transition resize-none flex-shrink-0"
+                                placeholder="..." ></textarea>
+                            <div onclick="zoomImage('img_320x100')" class="bg-gray-50 flex-1 border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden shadow-inner cursor-zoom-in">
+                                <img id="img_320x100" src="" class="hidden w-full h-full object-contain">
+                                <div id="empty_320x100" class="text-gray-300 flex flex-col items-center gap-2">
+                                    <span class="text-[10px] font-black uppercase tracking-widest opacity-40">GIF Buffer</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 300x50 Card -->
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col slide-up h-[400px]" style="animation-delay: 0.4s;">
+                        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-pink-100 text-pink-700 text-[10px] font-black px-2 py-0.5 rounded border border-pink-200 uppercase tracking-tighter">300x50</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="generateSize('300x50')" title="Yenile" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                </button>
+                                <button onclick="downloadImage('img_300x50', 'ziraat_300x50.gif')" title="İndir" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-pink-500 bg-pink-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-6 flex flex-col h-full space-y-4 relative overflow-hidden">
+                            <!-- Local Card Loader -->
+                            <div id="loader_300x50" class="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex items-center justify-center hidden transition-all duration-300 rounded-[2rem]">
+                                <div class="pulse-loader scale-50"><div></div><div></div></div>
+                            </div>
+
+                            <textarea id="prompt_300x50" rows="3" class="w-full bg-gray-50 border-none rounded-2xl p-4 text-xs font-medium text-gray-600 focus:ring-1 focus:ring-nesine-yellow transition resize-none flex-shrink-0"
+                                placeholder="..." ></textarea>
+                            <div onclick="zoomImage('img_300x50')" class="bg-gray-50 flex-1 border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden shadow-inner cursor-zoom-in">
+                                <img id="img_300x50" src="" class="hidden w-full h-full object-contain focus:pointer-events-none">
+                                <div id="empty_300x50" class="text-gray-300 flex flex-col items-center gap-2">
+                                    <span class="text-[10px] font-black uppercase tracking-widest opacity-40">GIF Buffer</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        function addLog(msg, type = 'info') {
+            const container = document.getElementById('log-container');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric", second: "numeric" });
+
+            const color = type === 'success' ? 'text-green-600 font-bold' : (type === 'warn' ? 'text-yellow-600' : 'text-gray-600');
+
+            const p = document.createElement('div');
+            p.className = `${color} border-l-2 ${type === 'success' ? 'border-green-500' : 'border-gray-200'} pl-2 slide-up`;
+            p.innerHTML = `<span class="text-gray-400 mr-2">[${time}]</span> ${msg}`;
+
+            container.appendChild(p);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function startGeneration() {
+            // Global generate: All formats sequentially
+            addLog('Global production triggered. Sequentially rendering all formats...');
+            await generateSize('1200x628');
+            await generateSize('120x600');
+            await generateSize('320x100');
+            // Others will follow when backend ready
+        }
+
+        async function generateSize(size) {
+            const emptyState = document.getElementById('output-empty');
+            const result = document.getElementById('result-container');
+            
+            const targetImg = document.getElementById(`img_${size}`);
+            const targetEmpty = document.getElementById(`empty_${size}`);
+            const targetPrompt = document.getElementById(`prompt_${size}`);
+            const targetLoader = document.getElementById(`loader_${size}`);
+
+            // Form verilerini topla
+            const formData = new FormData();
+            formData.append('league', 'ziraat');
+            formData.append('size', size);
+            formData.append('team_1', document.getElementById('team_1').value);
+            formData.append('team_2', document.getElementById('team_2').value);
+            formData.append('day', document.getElementById('day').value);
+            formData.append('hour', document.getElementById('hour').value);
+            formData.append('player_1_id', document.getElementById('player_1_id').value);
+            formData.append('player_2_id', document.getElementById('player_2_id').value);
+
+            // Change UI states: Ensure result panel is visible, show local loader
+            emptyState.style.display = 'none';
+            result.style.display = 'block';
+            if (targetLoader) targetLoader.classList.remove('hidden');
+            
+            addLog(`Generating format: ${size}...`, 'warn');
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/generate-banner', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(`${size} generation failed`);
+
+                const data = await response.json();
+                
+                // Update Prompt if empty
+                if (!targetPrompt.value) {
+                    targetPrompt.value = `${size} Prompt Metadata:\nMonument Extended typography detected.\nHybrid PSD rendering successful.`;
+                }
+
+                // Update Image
+                targetImg.src = data.imageUrl;
+                targetImg.classList.remove('hidden');
+                targetEmpty.classList.add('hidden');
+                
+                addLog(`${size} rendered!`, 'success');
+                
+            } catch (err) {
+                addLog(`Error (${size}): ${err.message}`, 'warn');
+            } finally {
+                if (targetLoader) targetLoader.classList.add('hidden');
+            }
+        }
+
+        async function downloadImage(imgId, filename) {
+            const img = document.getElementById(imgId);
+            if (!img || !img.src || img.classList.contains('hidden')) {
+                addLog('Görsel henüz üretilmedi.', 'warn');
+                return;
+            }
+            
+            try {
+                addLog(`${filename} hazırlanıyor...`);
+                // URL'den blob alıp zorla indir (Filename'i korumak için en sağlam yol)
+                const res = await fetch(img.src);
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.style.display = 'none';
+                link.href = url;
+                link.download = filename;
+                
+                document.body.appendChild(link);
+                link.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+                
+                addLog(`${filename} indirildi!`, 'success');
+            } catch (err) {
+                addLog(`İndirme hatası: ${err.message}`, 'warn');
+                window.open(img.src, '_blank');
+            }
+        }
+
+        // Initialize Prompts from metadata (mock)
+        window.addEventListener('load', () => {
+            document.getElementById('prompt_1200x628').value = "Ziraat Türkiye Kupası Ana Görsel Metin Kuralları:\n- Üstte Kupa Logosu\n- Oyuncular Sol/Sağ\n- Monument Extended Bold typo, justified.";
+            document.getElementById('prompt_120x600').value = "Dikey Banner Metin Kuralları:\n- Üstte Ziraat Logosu (y=28)\n- Oyuncular Yan Yana dar şeritte (y=163)\n- Takım İsimleri Dikey İstif (y=309)\n- Monument Extended.";
+            document.getElementById('prompt_320x100').value = "İlk sahne: Merkeze büyük Ziraat Türkiye Kupası logosu...\n\nİkinci sahne: Ev sahibi takım solda olacak şekilde...";
+            document.getElementById('prompt_300x50').value = "İlk sahne: Sol tarafta sarı zemin üstünde kupa logosu...\n\nİkinci sahne: Marka sağda, oyuncular dekupe...";
+        });
+
+        // Zoom Modal Functions
+        function zoomImage(imgId) {
+            const img = document.getElementById(imgId);
+            if (!img || img.classList.contains('hidden')) return;
+            
+            const modal = document.getElementById('zoom-modal');
+            const modalImg = document.getElementById('zoomed-img');
+            modalImg.src = img.src;
+            modal.style.display = 'flex';
+        }
+
+        function closeZoom() {
+            document.getElementById('zoom-modal').style.display = 'none';
+        }
+    </script>
+
+    <!-- Zoom Modal -->
+    <div id="zoom-modal" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-10 select-none" style="display: none;" onclick="closeZoom()">
+        <div class="absolute top-8 right-8 text-white cursor-pointer hover:scale-110 transition">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </div>
+        <img id="zoomed-img" src="" class="max-w-full max-h-full object-contain shadow-2xl border border-white/10">
+        <p class="text-white/50 text-xs font-mono mt-6 uppercase tracking-widest">Click anywhere to close</p>
+    </div>
+</body>
+
+</html>

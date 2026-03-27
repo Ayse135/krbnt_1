@@ -1,0 +1,135 @@
+{
+    "filename": "2.psd",
+    "size": {
+        "width": 1200,
+        "height": 628
+    },
+    "layers": [
+        {
+            "name": "grup",
+            "top": -48,
+            "left": -10,
+            "width": 1220,
+            "height": 1220,
+            "kind": "group",
+            "visible": true
+        },
+        {
+            "name": "Bg",
+            "top": -48,
+            "left": -10,
+            "width": 1220,
+            "height": 1220,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Alanyaspor_Galatasaray",
+            "top": 216,
+            "left": 350,
+            "width": 500,
+            "height": 96,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Gün_saat",
+            "top": 337,
+            "left": 542,
+            "width": 117,
+            "height": 61,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Futbolcular",
+            "top": 36,
+            "left": 28,
+            "width": 1145,
+            "height": 448,
+            "kind": "group",
+            "visible": true
+        },
+        {
+            "name": "Alanyaspor'lu Futbolcu",
+            "top": 40,
+            "left": 28,
+            "width": 303,
+            "height": 394,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "GS'li Futbolcu",
+            "top": 36,
+            "left": 870,
+            "width": 303,
+            "height": 396,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Kulüp_Logoları_SOL",
+            "top": 367,
+            "left": 128,
+            "width": 118,
+            "height": 117,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Kulüp_Logoları_SAĞ",
+            "top": 366,
+            "left": 971,
+            "width": 88,
+            "height": 118,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Ziraat Türkiye Kupası Logo",
+            "top": 26,
+            "left": 550,
+            "width": 98,
+            "height": 134,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Nesine Logo",
+            "top": 526,
+            "left": 480,
+            "width": 240,
+            "height": 103,
+            "kind": "group",
+            "visible": true
+        },
+        {
+            "name": "Rectangle 7",
+            "top": 526,
+            "left": 480,
+            "width": 240,
+            "height": 103,
+            "kind": "shape",
+            "visible": true
+        },
+        {
+            "name": "Nesine Logo",
+            "top": 539,
+            "left": 522,
+            "width": 157,
+            "height": 76,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Hemen Oyna",
+            "top": 439,
+            "left": 501,
+            "width": 200,
+            "height": 63,
+            "kind": "smartobject",
+            "visible": true
+        }
+    ]
+}

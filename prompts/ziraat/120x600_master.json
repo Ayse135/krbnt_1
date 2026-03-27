@@ -1,0 +1,90 @@
+{
+    "size": {
+        "width": 120,
+        "height": 600
+    },
+    "constants": [
+        {
+            "name": "Bg",
+            "top": -4,
+            "left": -236,
+            "width": 595,
+            "height": 594,
+            "kind": "smartobject"
+        },
+        {
+            "name": "Ziraat Türkiye Kupası Logo",
+            "top": 28,
+            "left": 41,
+            "width": 41,
+            "height": 54,
+            "kind": "smartobject"
+        },
+        {
+            "name": "Gün_saat",
+            "top": 372,
+            "left": 17,
+            "width": 87,
+            "height": 32,
+            "kind": "smartobject"
+        },
+        {
+            "name": "HEMEN OYNA BADGE",
+            "top": 460,
+            "left": 19,
+            "width": 83,
+            "height": 25,
+            "kind": "smartobject"
+        },
+        {
+            "name": "Nesine Logo",
+            "top": 549,
+            "left": 22,
+            "width": 78,
+            "height": 38,
+            "kind": "smartobject"
+        }
+    ],
+    "variables": {
+        "team_names_stacked": {
+            "name": "Gaziantep FK - Fenerbahçe",
+            "top": 309,
+            "left": 6,
+            "width": 109,
+            "height": 26,
+            "kind": "smartobject"
+        },
+        "player_1": {
+            "name": "Player 1",
+            "top": 163,
+            "left": 2,
+            "width": 57,
+            "height": 77,
+            "kind": "smartobject"
+        },
+        "player_2": {
+            "name": "Player 2",
+            "top": 163,
+            "left": 61,
+            "width": 57,
+            "height": 77,
+            "kind": "smartobject"
+        },
+        "team_logo_1": {
+            "name": "Logo 1",
+            "top": 229,
+            "left": 13,
+            "width": 36,
+            "height": 42,
+            "kind": "smartobject"
+        },
+        "team_logo_2": {
+            "name": "Logo 2",
+            "top": 229,
+            "left": 69,
+            "width": 43,
+            "height": 43,
+            "kind": "smartobject"
+        }
+    }
+}

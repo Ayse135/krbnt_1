@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nesine Layer Compositing Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bg-nesine-yellow {
+            background-color: #ffd000;
+        }
+
+        .text-nesine-yellow {
+            color: #ffd000;
+        }
+
+        .shadow-soft {
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        .layer-box {
+            transition: all 0.3s ease;
+        }
+
+        .layer-box.active {
+            border-color: #ffd000;
+            background-color: #fffbef;
+        }
+
+        /* Render Canvas Styles */
+        .canvas-container {
+            width: 100%;
+            max-width: 360px;
+            aspect-ratio: 9/16;
+            background: #f3f4f6;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+            margin: 0 auto;
+        }
+
+        .layer {
+            position: absolute;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .layer.visible {
+            opacity: 1;
+        }
+
+        /* Specific Layer Settings */
+        #layer-bg {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #071f42 0%, #1a365d 100%);
+            /* FB colors simulated */
+            z-index: 1;
+            transform: scale(1.1);
+        }
+
+        #layer-bg.visible {
+            transform: scale(1);
+        }
+
+        #layer-brand {
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 2;
+            transform: translateY(-20px);
+        }
+
+        #layer-brand.visible {
+            transform: translateY(0);
+        }
+
+        #layer-player {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(50px);
+            width: 140%;
+            max-width: 500px;
+            z-index: 3;
+        }
+
+        #layer-player.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #layer-text {
+            top: 40%;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 4;
+            transform: scale(0.9);
+        }
+
+        #layer-text.visible {
+            transform: scale(1);
+        }
+
+        #layer-footer {
+            bottom: 0px;
+            left: 0;
+            width: 100%;
+            background: #ffd000;
+            padding: 15px 0;
+            text-align: center;
+            z-index: 5;
+            transform: translateY(100%);
+        }
+
+        #layer-footer.visible {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="container mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="text-gray-400 hover:text-gray-900 transition mr-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <h1 class="font-black text-xl tracking-tight text-gray-900 leading-none">Layer <span
+                        class="text-gray-400 font-light">Compositing</span> Demo</h1>
+            </div>
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Code-Based Rendering Proof</div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 flex-1 flex flex-col lg:flex-row gap-8">
+
+        <!-- Left Column: Asset Manager (Simulating PSD Layers) -->
+        <section class="lg:w-1/3 flex flex-col gap-4">
+            <div class="bg-white rounded-3xl p-6 shadow-soft border border-gray-100 flex-1">
+                <h2 class="text-lg font-bold mb-2 text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                        </path>
+                    </svg>
+                    Source Layers (Simulated PSD)
+                </h2>
+                <p class="text-xs text-gray-500 mb-6">Click toggles to inject layers into the HTML render canvas on the
+                    right.</p>
+
+                <div class="space-y-3">
+                    <!-- Layer 1 -->
+                    <div id="btn-bg"
+                        class="layer-box flex items-center justify-between p-4 rounded-2xl border border-gray-200 cursor-pointer hover:border-gray-300"
+                        onclick="toggleLayer('bg')">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-900 to-blue-700 shadow-inner flex items-center justify-center">
+                                <span class="text-[10px] text-white/50 font-bold">BG</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-gray-900">Background Setup</h3>
+                                <p class="text-xs text-gray-500 font-mono">gradient/image layer</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch w-10 h-6 bg-gray-200 rounded-full relative transition">
+                            <div
+                                class="indicator w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layer 2 -->
+                    <div id="btn-brand"
+                        class="layer-box flex items-center justify-between p-4 rounded-2xl border border-gray-200 cursor-pointer hover:border-gray-300"
+                        onclick="toggleLayer('brand')">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center font-black text-xl text-blue-900">
+                                L
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-gray-900">Team Logos</h3>
+                                <p class="text-xs text-gray-500 font-mono">vector assets (svg/png)</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch w-10 h-6 bg-gray-200 rounded-full relative transition">
+                            <div
+                                class="indicator w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layer 3 -->
+                    <div id="btn-player"
+                        class="layer-box flex items-center justify-between p-4 rounded-2xl border border-gray-200 cursor-pointer hover:border-gray-300"
+                        onclick="toggleLayer('player')">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden bg-[url('assets/layers/player.png')] bg-cover bg-top">
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-gray-900">Cutout Player</h3>
+                                <p class="text-xs text-gray-500 font-mono">transparent png layer</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch w-10 h-6 bg-gray-200 rounded-full relative transition">
+                            <div
+                                class="indicator w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layer 4 -->
+                    <div id="btn-text"
+                        class="layer-box flex items-center justify-between p-4 rounded-2xl border border-gray-200 cursor-pointer hover:border-gray-300"
+                        onclick="toggleLayer('text')">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center font-black text-white text-lg font-serif">
+                                T
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-gray-900">Dynamic Text</h3>
+                                <p class="text-xs text-gray-500 font-mono">html text injection</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch w-10 h-6 bg-gray-200 rounded-full relative transition">
+                            <div
+                                class="indicator w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layer 5 -->
+                    <div id="btn-footer"
+                        class="layer-box flex items-center justify-between p-4 rounded-2xl border border-gray-200 cursor-pointer hover:border-gray-300"
+                        onclick="toggleLayer('footer')">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-nesine-yellow border border-yellow-400 flex items-center justify-center">
+                                <span class="font-black text-black">N</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-gray-900">Brand Footer</h3>
+                                <p class="text-xs text-gray-500 font-mono">static wrapper layer</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch w-10 h-6 bg-gray-200 rounded-full relative transition">
+                            <div
+                                class="indicator w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="toggleAll()"
+                    class="mt-6 w-full text-center text-xs font-bold text-gray-500 hover:text-gray-900 transition border border-gray-200 rounded-xl py-3 hover:bg-gray-50">
+                    Toggle All Layers Simultaneously
+                </button>
+            </div>
+        </section>
+
+        <!-- Middle Column: Live Render Canvas -->
+        <section class="lg:w-1/3 flex items-center justify-center">
+            <div class="w-full">
+                <!-- Frame Wrapper for realistic feel -->
+                <div class="p-2 border border-dashed border-gray-300 rounded-2xl bg-white/50 relative">
+                    <div class="absolute -top-3 -left-3 w-6 h-6 border-t-2 border-l-2 border-gray-400"></div>
+                    <div class="absolute -top-3 -right-3 w-6 h-6 border-t-2 border-r-2 border-gray-400"></div>
+                    <div class="absolute -bottom-3 -left-3 w-6 h-6 border-b-2 border-l-2 border-gray-400"></div>
+                    <div class="absolute -bottom-3 -right-3 w-6 h-6 border-b-2 border-r-2 border-gray-400"></div>
+
+                    <span
+                        class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-[10px] font-mono text-gray-400 font-bold tracking-widest uppercase">Canvas
+                        (1080x1920 Proportional)</span>
+
+                    <!-- The Canvas -->
+                    <div id="render-canvas" class="canvas-container"
+                        style="background-image: radial-gradient(#d1d5db 1px, transparent 1px); background-size: 20px 20px;">
+
+                        <!-- Layer Elements -->
+                        <div id="layer-bg" class="layer">
+                            <!-- SVG pattern/grunge can go here if needed -->
+                        </div>
+
+                        <div id="layer-brand" class="layer flex justify-center items-center gap-4">
+                            <!-- Using simple shapes for simulated logos if real ones aren't available -->
+                            <div
+                                class="w-16 h-16 rounded-full border-4 border-yellow-400 bg-blue-900 flex items-center justify-center shadow-lg">
+                                <span class="text-white font-black">FB</span></div>
+                            <span class="text-white/80 font-black italic mt-4 text-xl">VS</span>
+                            <div
+                                class="w-16 h-16 rounded-full border-4 border-white bg-red-600 flex items-center justify-center shadow-lg">
+                                <span class="text-white font-black text-sm">SAM</span></div>
+                        </div>
+
+                        <div id="layer-text" class="layer drop-shadow-lg">
+                            <h2
+                                class="text-white font-black text-4xl uppercase tracking-tighter shadow-black/50 drop-shadow-md">
+                                Pazar</h2>
+                            <h3 class="text-yellow-400 font-black text-6xl leading-none shadow-black/50 drop-shadow-md">
+                                20:00</h3>
+                        </div>
+
+                        <div id="layer-player" class="layer">
+                            <img src="assets/layers/player.png" alt="Player"
+                                class="w-full drop-shadow-2xl object-cover pointer-events-none">
+                        </div>
+
+                        <div id="layer-footer" class="layer flex flex-col items-center justify-center">
+                            <span
+                                class="bg-black text-yellow-400 font-black px-4 py-1 text-xs uppercase italic tracking-widest rounded mb-2">Hemen
+                                Oyna</span>
+                            <h1 class="font-black text-2xl tracking-tighter text-black leading-none">NESİNE</h1>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Settings & Data Display -->
+        <section class="lg:w-1/3 flex flex-col gap-4">
+            <div
+                class="bg-gray-900 rounded-3xl p-6 shadow-soft text-gray-300 flex-1 font-mono text-xs relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-emerald-500"></div>
+                <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                    DOM Structure / CSS Matrix
+                </h3>
+
+                <div class="space-y-4">
+                    <p class="text-gray-500">// Code execution logs simulating rendering engine</p>
+
+                    <div id="code-bg"
+                        class="opacity-30 transition-opacity p-2 rounded bg-white/5 border border-white/10">
+                        <span class="text-blue-400">const</span> bg = <span
+                            class="text-yellow-300">Composite</span>.<span class="text-green-300">layer</span>(<span
+                            class="text-orange-300">'bg'</span>);<br>
+                        bg.setStyle({ <span class="text-purple-300">background</span>: <span
+                            class="text-orange-300">'linear-gradient(...)'</span> });
+                    </div>
+
+                    <div id="code-brand"
+                        class="opacity-30 transition-opacity p-2 rounded bg-white/5 border border-white/10">
+                        <span class="text-blue-400">const</span> logos = <span
+                            class="text-yellow-300">Composite</span>.<span class="text-green-300">layer</span>(<span
+                            class="text-orange-300">'logos'</span>);<br>
+                        logos.setPosition(<span class="text-orange-300">'top'</span>, <span
+                            class="text-orange-300">'center'</span>).setZ(2);
+                    </div>
+
+                    <div id="code-player"
+                        class="opacity-30 transition-opacity p-2 rounded bg-white/5 border border-white/10">
+                        <span class="text-blue-400">const</span> playerConfig = { scale: <span
+                            class="text-orange-400">1.4</span>, yOffset: <span class="text-orange-400">50</span> };<br>
+                        <span class="text-blue-400">await</span> <span class="text-yellow-300">Renderer</span>.<span
+                            class="text-green-300">drawImage</span>(player_png, playerConfig);
+                    </div>
+
+                    <div id="code-text"
+                        class="opacity-30 transition-opacity p-2 rounded bg-white/5 border border-white/10">
+                        <span class="text-blue-400">const</span> textLayer = <span
+                            class="text-yellow-300">TextEngine</span>.<span class="text-green-300">render</span>({<br>
+                        &nbsp;&nbsp;date: <span class="text-orange-300">'Pazar'</span>,<br>
+                        &nbsp;&nbsp;time: <span class="text-orange-300">'20:00'</span><br>
+                        });
+                    </div>
+
+                    <div id="code-footer"
+                        class="opacity-30 transition-opacity p-2 rounded bg-white/5 border border-white/10">
+                        <span class="text-blue-400">const</span> footer = <span
+                            class="text-yellow-300">Composite</span>.<span
+                            class="text-green-300">applyBrandBottom</span>();<br>
+                        footer.attachTo(<span class="text-orange-300">'bottom'</span>);
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-white/10">
+                    <button
+                        class="w-full text-center bg-white/10 hover:bg-white/20 text-white py-2 rounded font-sans font-bold transition text-sm">
+                        Simulate Resize to (300x250)
+                    </button>
+                    <p class="text-[10px] text-gray-500 mt-2 text-center text-sans">Resizing recalculates the CSS matrix
+                        automatically based on preset rules.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const states = {
+            bg: false,
+            brand: false,
+            player: false,
+            text: false,
+            footer: false
+        };
+
+        function toggleLayer(id) {
+            states[id] = !states[id];
+
+            // Toggle Canvas Layer
+            const layerEl = document.getElementById(`layer-${id}`);
+            if (states[id]) {
+                layerEl.classList.add('visible');
+            } else {
+                layerEl.classList.remove('visible');
+            }
+
+            // Toggle Button Styling
+            const btnEl = document.getElementById(`btn-${id}`);
+            const toggleIndicator = btnEl.querySelector('.indicator');
+            const toggleBg = btnEl.querySelector('.toggle-switch');
+
+            if (states[id]) {
+                btnEl.classList.add('active');
+                toggleBg.classList.replace('bg-gray-200', 'bg-green-500');
+                toggleIndicator.style.transform = 'translateX(16px)';
+            } else {
+                btnEl.classList.remove('active');
+                toggleBg.classList.replace('bg-green-500', 'bg-gray-200');
+                toggleIndicator.style.transform = 'translateX(0)';
+            }
+
+            // Toggle Code Display
+            const codeEl = document.getElementById(`code-${id}`);
+            if (states[id]) {
+                codeEl.classList.remove('opacity-30');
+                codeEl.classList.add('border-green-500/50', 'bg-green-500/10');
+            } else {
+                codeEl.classList.add('opacity-30');
+                codeEl.classList.remove('border-green-500/50', 'bg-green-500/10');
+            }
+        }
+
+        function toggleAll() {
+            // Check if mostly on or off to decide direction
+            const activeCount = Object.values(states).filter(v => v).length;
+            const targetState = activeCount < 3; // if less than 3 are active, turn all ON, else turn all OFF
+
+            const delay = 150;
+            let currentDelay = 0;
+
+            ['bg', 'brand', 'player', 'text', 'footer'].forEach((id) => {
+                if (states[id] !== targetState) {
+                    setTimeout(() => toggleLayer(id), currentDelay);
+                    currentDelay += delay;
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

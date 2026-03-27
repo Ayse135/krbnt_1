@@ -1,0 +1,126 @@
+{
+    "filename": "1.psd",
+    "size": {
+        "width": 120,
+        "height": 600
+    },
+    "layers": [
+        {
+            "name": "Bg",
+            "top": -4,
+            "left": -236,
+            "width": 595,
+            "height": 594,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "grup",
+            "top": 163,
+            "left": 2,
+            "width": 116,
+            "height": 109,
+            "kind": "group",
+            "visible": true
+        },
+        {
+            "name": "Gaziantep FK'li Futbolcu",
+            "top": 163,
+            "left": 2,
+            "width": 57,
+            "height": 77,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "GFK_Logoları_SOL",
+            "top": 229,
+            "left": 13,
+            "width": 36,
+            "height": 42,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Fenerbahçe'li Futbolcu",
+            "top": 163,
+            "left": 61,
+            "width": 57,
+            "height": 77,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "FB_Logoları_SAĞ",
+            "top": 229,
+            "left": 69,
+            "width": 43,
+            "height": 43,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "HEMEN OYNA BADGE",
+            "top": 460,
+            "left": 19,
+            "width": 83,
+            "height": 25,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Gaziantep FK - Fenerbahçe",
+            "top": 309,
+            "left": 6,
+            "width": 109,
+            "height": 26,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Gün_saat",
+            "top": 372,
+            "left": 17,
+            "width": 87,
+            "height": 32,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Ziraat Türkiye Kupası Logo",
+            "top": 28,
+            "left": 41,
+            "width": 41,
+            "height": 54,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Group 11",
+            "top": 542,
+            "left": -5,
+            "width": 133,
+            "height": 70,
+            "kind": "group",
+            "visible": true
+        },
+        {
+            "name": "LOGO RECTANGLE copy",
+            "top": 542,
+            "left": -5,
+            "width": 133,
+            "height": 70,
+            "kind": "shape",
+            "visible": true
+        },
+        {
+            "name": "Vector Smart Object",
+            "top": 549,
+            "left": 22,
+            "width": 78,
+            "height": 38,
+            "kind": "smartobject",
+            "visible": true
+        }
+    ]
+}

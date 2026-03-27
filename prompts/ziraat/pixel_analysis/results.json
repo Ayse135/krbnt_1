@@ -1,0 +1,16 @@
+[
+    {
+        "layer": "Gaziantep FK - Fenerbahçe",
+        "pixel_height": 112,
+        "pixel_width": 471,
+        "suggested_font_size": 112,
+        "color_hex": "#000000"
+    },
+    {
+        "layer": "Gün_saat",
+        "pixel_height": 70,
+        "pixel_width": 188,
+        "suggested_font_size": 70,
+        "color_hex": "#000000"
+    }
+]

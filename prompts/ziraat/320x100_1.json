@@ -1,0 +1,135 @@
+{
+    "filename": "1.psd",
+    "size": {
+        "width": 320,
+        "height": 100
+    },
+    "layers": [
+        {
+            "name": "Bg",
+            "top": -22,
+            "left": -2,
+            "width": 324,
+            "height": 329,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "ztk-yatay-logo",
+            "top": 8,
+            "left": 84,
+            "width": 150,
+            "height": 58,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "2",
+            "top": 0,
+            "left": 0,
+            "width": 0,
+            "height": 0,
+            "kind": "group",
+            "visible": false
+        },
+        {
+            "name": "Gaziantep FK'li Futbolcu",
+            "top": 3,
+            "left": 9,
+            "width": 64,
+            "height": 87,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "GFK_Logoları_SOL",
+            "top": 24,
+            "left": 68,
+            "width": 47,
+            "height": 59,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Fenerbahçe'li Futbolcu",
+            "top": 3,
+            "left": 243,
+            "width": 64,
+            "height": 87,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "FB_Logoları_SAĞ",
+            "top": 24,
+            "left": 200,
+            "width": 56,
+            "height": 59,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "3",
+            "top": 0,
+            "left": 0,
+            "width": 0,
+            "height": 0,
+            "kind": "group",
+            "visible": false
+        },
+        {
+            "name": "Gaziantep FK - Fenerbahçe",
+            "top": 22,
+            "left": 4,
+            "width": 183,
+            "height": 43,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Gün_saat",
+            "top": 31,
+            "left": 216,
+            "width": 94,
+            "height": 34,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "BANT",
+            "top": 68,
+            "left": 129,
+            "width": 60,
+            "height": 42,
+            "kind": "group",
+            "visible": true
+        },
+        {
+            "name": "40",
+            "top": 68,
+            "left": 129,
+            "width": 60,
+            "height": 42,
+            "kind": "pixel",
+            "visible": true
+        },
+        {
+            "name": "Vector Smart Object",
+            "top": 72,
+            "left": 137,
+            "width": 45,
+            "height": 23,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "HEMEN OYNA BADGE",
+            "top": 43,
+            "left": 129,
+            "width": 62,
+            "height": 20,
+            "kind": "smartobject",
+            "visible": false
+        }
+    ]
+}

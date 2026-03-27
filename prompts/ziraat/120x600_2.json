@@ -1,0 +1,126 @@
+{
+    "filename": "2.psd",
+    "size": {
+        "width": 120,
+        "height": 600
+    },
+    "layers": [
+        {
+            "name": "Bg",
+            "top": -4,
+            "left": -236,
+            "width": 595,
+            "height": 594,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "grup",
+            "top": 166,
+            "left": 2,
+            "width": 116,
+            "height": 105,
+            "kind": "group",
+            "visible": true
+        },
+        {
+            "name": "Alanyaspor'lu Futbolcu",
+            "top": 166,
+            "left": 2,
+            "width": 57,
+            "height": 74,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Kulüp_Logoları_SOL",
+            "top": 229,
+            "left": 10,
+            "width": 42,
+            "height": 41,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "GS'li Futbolcu",
+            "top": 166,
+            "left": 61,
+            "width": 57,
+            "height": 74,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Kulüp_Logoları_SAĞ",
+            "top": 228,
+            "left": 74,
+            "width": 33,
+            "height": 43,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "HEMEN OYNA BADGE",
+            "top": 460,
+            "left": 19,
+            "width": 83,
+            "height": 25,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Alanyaspor_Galatasaray",
+            "top": 311,
+            "left": 3,
+            "width": 115,
+            "height": 22,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Gün_saat",
+            "top": 363,
+            "left": 34,
+            "width": 53,
+            "height": 28,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Ziraat Türkiye Kupası Logo",
+            "top": 28,
+            "left": 41,
+            "width": 41,
+            "height": 54,
+            "kind": "smartobject",
+            "visible": true
+        },
+        {
+            "name": "Group 11",
+            "top": 542,
+            "left": -5,
+            "width": 133,
+            "height": 70,
+            "kind": "group",
+            "visible": true
+        },
+        {
+            "name": "LOGO RECTANGLE copy",
+            "top": 542,
+            "left": -5,
+            "width": 133,
+            "height": 70,
+            "kind": "shape",
+            "visible": true
+        },
+        {
+            "name": "Vector Smart Object",
+            "top": 549,
+            "left": 22,
+            "width": 78,
+            "height": 38,
+            "kind": "smartobject",
+            "visible": true
+        }
+    ]
+}
