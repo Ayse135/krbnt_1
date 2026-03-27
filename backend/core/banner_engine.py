@@ -1,6 +1,8 @@
 import os
 import json
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+import math
+import random
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
 from pathlib import Path
 
 class BannerEngine:
@@ -46,16 +48,63 @@ class BannerEngine:
         new_b = b.point(lambda i: int(i * cb))
         return Image.merge("RGBA", (new_r, new_g, new_b, a))
 
-    def create_player_mask(self, size, radius=180):
-        """Piller maskesi - Daha belirgin sol üst kavis (PSB spec)"""
+    def create_player_mask(self, size, radii=(180, 40, 40, 40)):
+        """Piller maskesi - Her köşe için ayrı radius desteği (TL, TR, BR, BL)"""
         mask = Image.new("L", size, 0)
         draw = ImageDraw.Draw(mask)
         w, h = size
-        r = radius 
-        draw.rectangle([0, r, w, h], fill=255)
-        draw.rectangle([r, 0, w, r], fill=255)
-        draw.pieslice([0, 0, 2*r, 2*r], 180, 270, fill=255)
+        r_tl, r_tr, r_br, r_bl = radii
+        
+        # TL
+        draw.pieslice([0, 0, 2*r_tl, 2*r_tl], 180, 270, fill=255)
+        # TR
+        draw.pieslice([w-2*r_tr, 0, w, 2*r_tr], 270, 0, fill=255)
+        # BR
+        draw.pieslice([w-2*r_br, h-2*r_br, w, h], 0, 90, fill=255)
+        # BL
+        draw.pieslice([0, h-2*r_bl, 2*r_bl, h], 90, 180, fill=255)
+        
+        # İç alanları doldur (Üst, Orta, Alt)
+        draw.rectangle([r_tl, 0, w-r_tr, max(r_tl, r_tr)], fill=255) # Üst bant
+        draw.rectangle([0, max(r_tl, r_tr), w, h-max(r_bl, r_br)], fill=255) # Orta gövde
+        draw.rectangle([r_bl, h-max(r_bl, r_br), w-r_br, h], fill=255) # Alt bant
+        
         return mask
+
+    def _generate_glitch_texture(self, size, color):
+        """Surgical radial burst streaks (Premium Glitch)"""
+        texture = Image.new("RGBA", size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(texture)
+        w, h = size
+        cx, cy = w // 2, h // 2
+        
+        import random
+        num_streaks = 60 # Daha yoğun
+        for _ in range(num_streaks):
+            angle = random.uniform(0, 360)
+            rad = math.radians(angle)
+            # Merkezden başlayan veya merkeze yakın başlayan çizgiler
+            start_dist = random.uniform(0, w * 0.2)
+            length = random.uniform(w * 0.4, w * 0.9)
+            width = random.uniform(1, 4) # Daha keskin çizgiler
+            opacity = random.randint(20, 150)
+            
+            x0 = cx + math.cos(rad) * start_dist
+            y0 = cy + math.sin(rad) * start_dist
+            
+            # Dalgalı/Glitchy bitiş
+            points = [(x0, y0)]
+            for d in range(int(start_dist) + 10, int(start_dist + length), 20):
+                # Subtle jitter
+                jitter = random.uniform(-10, 10)
+                px = cx + math.cos(rad) * d + math.cos(rad + math.pi/2) * jitter
+                py = cy + math.sin(rad) * d + math.sin(rad + math.pi/2) * jitter
+                points.append((px, py))
+            
+            if len(points) > 1:
+                draw.line(points, fill=(color[0], color[1], color[2], opacity), width=int(width))
+                
+        return texture.filter(ImageFilter.GaussianBlur(radius=1)) # Daha net/keskin
 
     def draw_text_with_spacing(self, draw, text, position, font, fill="white", spacing=0, target_width=None):
         """Metni belirli bir harf aralığı ile veya belirli bir genişliğe yayarak çizer"""
@@ -105,36 +154,46 @@ class BannerEngine:
                 team_name = data.get(f"team_{i}")
                 t_colors = self.get_team_colors(team_name)
                 
-                # Arka Plan (Glow & Outline)
+                # Arka Plan (Glow & Premium Glitch)
                 if glow_tpl and outline_tpl:
-                    b_size = (380, 480) 
+                    b_size = (380, 520) 
                     glow = self._colorize_image(glow_tpl, t_colors["p"]).resize(b_size, Image.Resampling.LANCZOS)
+                    
+                    # Premium Glitch Üretimi
+                    glitch = self._generate_glitch_texture(b_size, t_colors["p"])
+                    glow = Image.alpha_composite(glow, glitch)
+                    
                     outline = self._colorize_image(outline_tpl, t_colors["p"]).resize(b_size, Image.Resampling.LANCZOS)
                     
-                    # Yerleşim: Oyuncunun (280x480) arkasında ortalanmış
-                    # Glow ve Outline'ı biraz aşağı çekerek kafa taşma payı bırakıyoruz
-                    b_pos = (p_pos[0] + (p_size[0] - b_size[0]) // 2, p_pos[1] + 60)
-                    canvas.alpha_composite(glow, b_pos)
-                    canvas.alpha_composite(outline, b_pos)
+                    # Pill maskesi (PSD uyumlu: TL=180, Others=40)
+                    b_mask = self.create_player_mask(b_size, radii=(180, 40, 40, 40))
+                    
+                    # Arka plan yerleşimi (Oyuncunun arkasında)
+                    b_pos = (p_pos[0] + (p_size[0] - b_size[0]) // 2, p_pos[1] + 50)
+                    
+                    # Maskelenmiş arka plan oluştur
+                    b_canvas = Image.new("RGBA", b_size, (0, 0, 0, 0))
+                    b_canvas.alpha_composite(glow)
+                    b_canvas.alpha_composite(outline)
+                    b_canvas.putalpha(b_mask)
+                    
+                    canvas.alpha_composite(b_canvas, b_pos)
 
                 # Oyuncu Maskeleme ve Pop-out (Kafa dışarıda)
                 if p_img_path and os.path.exists(p_img_path):
                     p_img_source = Image.open(p_img_path).convert("RGBA")
-                    pop_out = 70
+                    pop_out = 110 # Daha iddialı pop-out
                     p_full_size = (p_size[0], p_size[1] + pop_out)
                     p_img = ImageOps.fit(p_img_source, p_full_size, method=Image.Resampling.LANCZOS, centering=(0.5, 0.0))
                     
-                    # Maske: Sadece alt kavisli kutuyu kes, üst (kafa) kısmını tam göster
+                    # Maske: Pill şekline uygun kesim
                     p_mask = Image.new("L", p_full_size, 0)
-                    inner_mask = self.create_player_mask(p_size, radius=130)
+                    inner_mask = self.create_player_mask(p_size, radii=(180, 40, 40, 40))
                     p_mask.paste(inner_mask, (0, pop_out))
+                    p_mask.paste(255, [0, 0, p_size[0], pop_out]) # Kafa kısmını serbest bırak
                     
-                    draw_m = ImageDraw.Draw(p_mask)
-                    draw_m.rectangle([0, 0, p_full_size[0], pop_out], fill=255)
-                    
-                    p_final = Image.new("RGBA", p_full_size, (0,0,0,0))
-                    p_final.paste(p_img, (0, 0), p_mask)
-                    canvas.alpha_composite(p_final, (p_pos[0], p_pos[1] - pop_out))
+                    p_img.putalpha(p_mask) # Maskeyi uygula
+                    canvas.alpha_composite(p_img, (p_pos[0], p_pos[1] - pop_out))
 
         # Logo ve diğer öğeler
         for i in [1, 2]:
