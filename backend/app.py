@@ -44,6 +44,7 @@ async def generate_banner(
     team_2: str = Form(...),
     day: str = Form(...),
     hour: str = Form(...),
+    match_title: str = Form(default="SAMSUNSPOR ÇEYREK FİNAL YOLUNDA!"),
     player_1_id: str = Form(default="1"),
     player_2_id: str = Form(default="2")
 ):
@@ -66,25 +67,29 @@ async def generate_banner(
             "team_2": team_2,
             "day": day,
             "hour": hour,
+            "match_title": match_title,
             "player_1_path": f"/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/players/player_{player_1_id}.png",
             "player_2_path": f"/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/players/player_{player_2_id}.png",
             "logo_1_path": f"/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/logos/logo_{l1_id}.png",
             "logo_2_path": f"/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/logos/logo_{l2_id}.png"
         }
         
-        filename = f"ziraat_{size}.{'gif' if size == '320x100' else 'png'}"
+        filename = f"ziraat_{size}.{'gif' if size in ['320x100', '300x50'] else 'png'}"
         final_path = OUTPUT_DIR / filename
         
         if size == "320x100":
-            gif_path = ENGINE.generate_320x100(data)
-            # Move gif to output
+            gif_path = ENGINE.generate_320x100(data, league=league)
+            import shutil
+            shutil.copy(gif_path, str(final_path))
+        elif size == "300x50":
+            gif_path = ENGINE.generate_300x50(data, league=league)
             import shutil
             shutil.copy(gif_path, str(final_path))
         else:
             if size == "120x600":
-                img = ENGINE.generate_120x600(data)
+                img = ENGINE.generate_120x600(data, league=league)
             else:
-                img = ENGINE.generate_1200x628(data)
+                img = ENGINE.generate_1200x628(data, league=league)
             
             img.save(str(final_path), format="PNG")
         

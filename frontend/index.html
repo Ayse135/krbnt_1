@@ -139,14 +139,22 @@
             <div class="bg-white rounded-3xl p-8 shadow-soft border border-gray-100 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 to-nesine-yellow"></div>
 
-                <h2 class="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-                        </path>
-                    </svg>
-                    Data Input
-                </h2>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                            </path>
+                        </svg>
+                        Data Input
+                    </h2>
+                    
+                    <select id="league" name="league"
+                        class="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg focus:ring-nesine-yellow focus:border-nesine-yellow block p-2 px-3 font-bold transition">
+                        <option value="ZIRAAT">ZİRAAT KUPASI</option>
+                        <option value="UEFA">UEFA CONFERENCE</option>
+                    </select>
+                </div>
 
                 <form id="gen-form" class="space-y-6">
 
@@ -174,6 +182,13 @@
                                 <option value="SAMSUNSPOR">Samsunspor</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Match Title (For UEFA) -->
+                    <div class="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest">Match Title <span class="text-gray-400 lowercase">(Required for UEFA)</span></label>
+                        <input type="text" id="match_title" name="match_title" placeholder="SAMSUNSPOR ÇEYREK FİNAL YOLUNDA!"
+                            class="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow p-3 shadow-sm font-semibold transition uppercase">
                     </div>
 
                     <!-- Player Selection -->
@@ -456,7 +471,7 @@
             await generateSize('1200x628');
             await generateSize('120x600');
             await generateSize('320x100');
-            // Others will follow when backend ready
+            await generateSize('300x50');
         }
 
         async function generateSize(size) {
@@ -470,12 +485,13 @@
 
             // Form verilerini topla
             const formData = new FormData();
-            formData.append('league', 'ziraat');
+            formData.append('league', document.getElementById('league').value);
             formData.append('size', size);
             formData.append('team_1', document.getElementById('team_1').value);
             formData.append('team_2', document.getElementById('team_2').value);
             formData.append('day', document.getElementById('day').value);
             formData.append('hour', document.getElementById('hour').value);
+            formData.append('match_title', document.getElementById('match_title').value);
             formData.append('player_1_id', document.getElementById('player_1_id').value);
             formData.append('player_2_id', document.getElementById('player_2_id').value);
 
