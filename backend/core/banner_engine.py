@@ -162,7 +162,7 @@ class BannerEngine:
                     p_full_size = (v_player["width"], v_player["height"] + 140)
                     p_img = ImageOps.fit(p_src, p_full_size, centering=(0.5, 0.0))
                     p_mask = Image.new("L", p_full_size, 0)
-                    p_mask.paste(self.create_player_mask(v_player["width"], radius=130), (0, 140))
+                    p_mask.paste(self.create_player_mask((v_player["width"], v_player["height"]), radius=130), (0, 140))
                     p_mask.paste(255, [0, 0, v_player["width"], 140])
                     p_final = Image.new("RGBA", p_full_size, (0,0,0,0))
                     p_final.paste(p_img, (0, 0), p_mask)
@@ -170,25 +170,17 @@ class BannerEngine:
 
         # Logo Loop
         if league.upper() == "UEFA":
-            uefa_logo_positions = [{"top": 140, "left": 272, "w": 150, "h": 150}, {"top": 140, "left": 775, "w": 150, "h": 150}]
+            uefa_logo_centers = [(288, 305), (1110, 305)]
             for i in [1, 2]:
                 l_path = data.get(f"logo_{i}_path")
                 if l_path and os.path.exists(l_path):
-                    v_logo = uefa_logo_positions[i-1]
-                    l_img = Image.open(l_path).convert("RGBA").resize((v_logo["w"], v_logo["h"]), Image.Resampling.LANCZOS)
-                    l_glow = self.apply_glow(l_img, color=(6, 191, 80), radius=55, opacity=220)
-                    canvas.alpha_composite(l_glow, (v_logo["left"] - 165, v_logo["top"] - 165))
-        else:
-            for i in [1, 2]:
-                v_logo = self.master["variables"].get(f"team_logo_{i}")
-                l_path = data.get(f"logo_{i}_path")
-                if v_logo and l_path and os.path.exists(l_path):
-                    l_img = Image.open(l_path).convert("RGBA").resize((v_logo["width"], v_logo["height"]))
-                    canvas.paste(l_img, (v_logo["left"], v_logo["top"]), l_img)
-
-        # Branding & Text
-        draw = ImageDraw.Draw(canvas)
-        if league.upper() == "UEFA":
+                    l_img = Image.open(l_path).convert("RGBA").resize((120, 120))
+                    l_glow = self.apply_glow(l_img, color=(6, 191, 80), radius=50, opacity=220)
+                    canvas.alpha_composite(l_glow, (uefa_logo_centers[i-1][0] - 150, uefa_logo_centers[i-1][1] - 150))
+                    canvas.alpha_composite(l_img, (uefa_logo_centers[i-1][0] - 60, uefa_logo_centers[i-1][1] - 60))
+            
+            # Branding & Text
+            draw = ImageDraw.Draw(canvas)
             font_title = ImageFont.truetype(f_bold, 55)
             title = data.get('match_title', '').upper()
             tw = draw.textlength(title, font=font_title)
@@ -211,12 +203,6 @@ class BannerEngine:
             ho_path = self.assets_path / "branding" / "hemen_oyna.png"
             if ho_path.exists(): canvas.alpha_composite(Image.open(ho_path).convert("RGBA").resize((185, 52)), ((width-185)//2, 480))
             
-            # --- FINAL OVERLAY PHASE (v24 Fidelity) ---
-            # Ambient Vines/Lines (Must sit OVER the players)
-            tex_path = os.path.join(template_dir, "uefa_bg_textures.png")
-            if os.path.exists(tex_path):
-                tex = Image.open(tex_path).convert("RGBA")
-                canvas.alpha_composite(tex, (-933, -906))
             
             # Player Signatures (Absolute Top)
             for i in [1, 2]:

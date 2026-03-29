@@ -47,24 +47,38 @@ class VisionUtils:
         return (w // 2, int(h * 0.3), int(w * 0.2), int(h * 0.2))
 
     @classmethod
-    def align_player_to_anchor(cls, player_pil, anchor_pos, target_face_h=180):
+    def align_player_to_anchor(cls, player_pil, anchor_pos, canvas_h=628, target_face_h=190):
         """
         Calculates the necessary transform to place the player's face on the anchor.
         anchor_pos: (target_x, target_y) on the canvas.
+        canvas_h: Total height of the target canvas (to ensure bottom contact).
         Returns: (transformed_player_pil, paste_pos)
         """
         curr_x, curr_y, curr_w, curr_h = cls.get_face_center(player_pil)
         
-        # 1. Scale based on target face height
-        scale = target_face_h / curr_h
-        new_size = (int(player_pil.width * scale), int(player_pil.height * scale))
+        # 1. Base Scale: Target face size
+        scale_face = target_face_h / curr_h
+        
+        # 2. Safety Scale (v28): Ensure player torso reaches the bottom
+        # Remaining height on canvas from anchor to bottom
+        dist_to_bottom = canvas_h - anchor_pos[1]
+        # Remaining height in photo from face center to bottom
+        dist_in_img = player_pil.height - curr_y
+        
+        # If photo is short (portrait), we might need a larger scale 
+        # to ensure the body doesn't float.
+        scale_safety = dist_to_bottom / dist_in_img if dist_in_img > 0 else scale_face
+        
+        # Final Scale: Use the larger of the two
+        final_scale = max(scale_face, scale_safety)
+        
+        new_size = (int(player_pil.width * final_scale), int(player_pil.height * final_scale))
         player_resized = player_pil.resize(new_size, Image.Resampling.LANCZOS)
         
-        # 2. Re-calculate face center on the resized image
-        scaled_x = int(curr_x * scale)
-        scaled_y = int(curr_y * scale)
-        
         # 3. Calculate paste position so scaled_face lands on anchor_pos
+        scaled_x = int(curr_x * final_scale)
+        scaled_y = int(curr_y * final_scale)
+        
         paste_x = anchor_pos[0] - scaled_x
         paste_y = anchor_pos[1] - scaled_y
         
