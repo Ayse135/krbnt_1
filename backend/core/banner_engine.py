@@ -129,10 +129,6 @@ class BannerEngine:
         
         if league.upper() == "UEFA":
             canvas.paste((0, 0, 0, 255), [0, 0, width, height])
-            tex_path = os.path.join(template_dir, "uefa_bg_textures.png")
-            if os.path.exists(tex_path):
-                tex = Image.open(tex_path).convert("RGBA")
-                canvas.alpha_composite(tex, (-933, -906))
             f_bold = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_SemiExpanded-Bold.ttf"
         else:
             f_bold = self.fonts["ziraat_bold"]
@@ -214,8 +210,26 @@ class BannerEngine:
             self.draw_nesine_uefa_box(canvas, (492, 536))
             ho_path = self.assets_path / "branding" / "hemen_oyna.png"
             if ho_path.exists(): canvas.alpha_composite(Image.open(ho_path).convert("RGBA").resize((185, 52)), ((width-185)//2, 480))
+            
+            # --- FINAL OVERLAY PHASE (v24 Fidelity) ---
+            # Ambient Vines/Lines (Must sit OVER the players)
+            tex_path = os.path.join(template_dir, "uefa_bg_textures.png")
+            if os.path.exists(tex_path):
+                tex = Image.open(tex_path).convert("RGBA")
+                canvas.alpha_composite(tex, (-933, -906))
+            
+            # Player Signatures (Absolute Top)
+            for i in [1, 2]:
+                sig_path = data.get(f"signature_{i}_path")
+                if sig_path and os.path.exists(sig_path):
+                    sig_img = Image.open(sig_path).convert("RGBA")
+                    # Scale signature to reasonable size (e.g. 300px width)
+                    sig_img.thumbnail((300, 180), Image.Resampling.LANCZOS)
+                    # Positions: Bottom Left and Bottom Right areas
+                    sig_pos = (20, 420) if i == 1 else (width - sig_img.width - 20, 420)
+                    canvas.alpha_composite(sig_img, sig_pos)
         else:
-            # Ziraat Branding / Text Logic (Placeholder for brevity, can be expanded if needed)
+            # Ziraat Branding / Text Logic
             pass
 
         return canvas
