@@ -18,11 +18,11 @@ class Ziraat1200(ZiraatBase):
         else:
             canvas.paste((240, 240, 240, 255), [0, 0, width, height])
 
-        # 2. Top Ziraat Logo Box (551, 26, 98, 134)
-        z_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ztk_yatay_logo.png")
+        # 2. Top Ziraat Logo Vertical (Center Top)
+        z_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "ziraat_logo.png")
         if os.path.exists(z_logo_path):
             z_img = Image.open(z_logo_path).convert("RGBA")
-            z_img.thumbnail((180, 150), Image.Resampling.LANCZOS)
+            z_img.thumbnail((150, 150), Image.Resampling.LANCZOS)
             # Center the logo
             lx, ly = (width - z_img.width)//2, 26
             canvas.alpha_composite(z_img, (lx, ly))
