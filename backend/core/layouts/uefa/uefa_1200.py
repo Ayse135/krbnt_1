@@ -5,7 +5,7 @@ from ..base import BaseLayout
 
 class UEFA1200(BaseLayout):
     def render(self, data):
-        """PSD-Perfect UEFA 1200x628 Replication (Smaller Logos & Final Branding)."""
+        """PSD-Perfect UEFA 1200x628 Replication (Balanced Players & Logos)."""
         width, height = 1200, 628
         canvas = Image.new("RGBA", (width, height), (0, 0, 0, 255))
         draw = ImageDraw.Draw(canvas)
@@ -23,45 +23,51 @@ class UEFA1200(BaseLayout):
         else:
             draw.rectangle([0, 0, width, height], fill=(0, 0, 0, 255))
 
-        # 3. Takım Logoları (Küçültülmüş - Kullanıcı Talebi)
-        # Orijinal Merkezler: Logo 1 [358, 229], Logo 2 [826, 228]
-        # Yeni Boyutlar: ~20% Küçültme (yaklaşık 185x210)
+        # 3. Akıllı Oyuncu Yerleşimi (Tight Halo Glow)
+        # PSD OyuncularYeni Bbox: Left (-78, 133), Right (779, 131)
+        players_data = [
+            {"path": data.get("player_1_path"), "center_x": 172, "target_y": 133, "side": "left"},
+            {"path": data.get("player_2_path"), "center_x": 1037, "target_y": 131, "side": "right"}
+        ]
+
+        for p in players_data:
+            if p["path"] and os.path.exists(p["path"]):
+                p_img = Image.open(p["path"]).convert("RGBA")
+                self.smart_position_player(canvas, p_img, p["center_x"], p["target_y"])
+
+        # 4. Takım Logoları (Geniş Atmosferik Işıma)
+        # PSD Logolar: Left (347, 225), Right (850, 229)
+        # Not: Logo render oyuncudan SONRA, katman olarak üstte durur.
         logos_data = [
-            {"path": data.get("logo_1_path"), "center": (358, 229), "max_size": (185, 210)},
-            {"path": data.get("logo_2_path"), "center": (826, 228), "max_size": (175, 210)}
+            {"path": data.get("logo_1_path"), "center": (347, 225), "max_size": (185, 210)},
+            {"path": data.get("logo_2_path"), "center": (850, 229), "max_size": (175, 210)}
         ]
 
         for l in logos_data:
             if l["path"] and os.path.exists(l["path"]):
-                # Logo Glow (Hafif küçültülmüş yarıçap)
-                self.draw_glow(canvas, l["center"], radius=140, color=(0, 191, 80, 60))
-                
                 l_img = Image.open(l["path"]).convert("RGBA")
                 l_img.thumbnail(l["max_size"], Image.Resampling.LANCZOS)
-                # Merkeze yerleştir
+                # Logos: Wide Spread (Dilation=35, Blur=65)
+                self.draw_mask_glow(canvas, l_img, l["center"], color=(6, 191, 80, 220), dilation=35, blur=65)
                 canvas.alpha_composite(l_img, (l["center"][0] - l_img.width // 2, l["center"][1] - l_img.height // 2))
 
-        # 4. Yazılar
+        # 5. Yazılar (Title overlap fix)
         try:
             title = data.get('match_title', '').upper()
             if title:
                 font_title = ImageFont.truetype(f_title, 55)
-                tw = draw.textlength(title, font=font_title)
-                draw.text(((width - tw) // 2, 30), title, font=font_title, fill="white")
+                draw.text(((width - draw.textlength(title, font=font_title)) // 2, 30), title, font=font_title, fill="white")
             
             day_text = data.get('day', 'PAZARTESİ').upper()
             hour_text = data.get('hour', '20:30')
             font_info = ImageFont.truetype(f_saira, 60)
             
-            dw = draw.textlength(day_text, font=font_info)
-            draw.text(((width - dw) // 2, 160), day_text, font=font_info, fill="#06BF50")
-            
-            hw = draw.textlength(hour_text, font=font_info)
-            draw.text(((width - hw) // 2, 222), hour_text, font=font_info, fill="white")
+            draw.text(((width - draw.textlength(day_text, font=font_info)) // 2, 160), day_text, font=font_info, fill="#06BF50")
+            draw.text(((width - draw.textlength(hour_text, font=font_info)) // 2, 222), hour_text, font=font_info, fill="white")
         except Exception as e:
             print(f"Typo Error: {e}")
 
-        # 5. Branding (UEFA Logo & Hemen Oyna)
+        # 6. Branding (UEFA Logo & Hemen Oyna)
         if os.path.exists(u_logo_path):
             u_img = Image.open(u_logo_path).convert("RGBA")
             u_img = u_img.resize((81, 124), Image.Resampling.LANCZOS)
@@ -80,19 +86,84 @@ class UEFA1200(BaseLayout):
             n_img.thumbnail((180, 70), Image.Resampling.LANCZOS)
             canvas.alpha_composite(n_img, (492 + (217 - n_img.width) // 2, 536 + (93 - n_img.height) // 2))
 
-        # 6. Save Output
+        # 7. Save Output
         out_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "output", "banner_uefa_1200.png")
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         canvas.save(out_path)
         return out_path
 
+    def smart_position_player(self, canvas, img, center_x, target_y):
+        """Oyuncuyu kafa/omuz hattına göre akıllıca ölçekler ve yerleştirir."""
+        # 1. Kafa Analizi
+        alpha = img.split()[3]
+        bbox = alpha.getbbox() 
+        if not bbox: return
+        
+        # Oyuncuyu PSD standardına göre ölçekle
+        current_height = bbox[3] - bbox[1]
+        target_render_height = 800 
+        scale = target_render_height / current_height
+        
+        new_w = int(img.width * scale)
+        new_h = int(img.height * scale)
+        img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        
+        # Yeni merkez ve kafa konumu
+        new_alpha = img.split()[3]
+        new_bbox = new_alpha.getbbox()
+        
+        # Player Glow: Tight Halo (Dilation=8, Blur=25, opacity=180)
+        self.draw_mask_glow(canvas, img, (center_x, target_y + (new_h/2) - (new_bbox[1])), 
+                            color=(6, 191, 80, 180), dilation=8, blur=25)
+        
+        # Yerleştir
+        render_x = center_x - (new_w // 2)
+        render_y = target_y - new_bbox[1]
+        canvas.alpha_composite(img, (int(render_x), int(render_y)))
+
+    def draw_mask_glow(self, canvas, img, center, color, dilation=15, blur=30):
+        """Logonun/Oyuncunun çevresini saran konfigüre edilebilir neon hale efekti."""
+        if img.mode != "RGBA":
+            img = img.convert("RGBA")
+        
+        margin = blur + 50
+        glow_canvas = Image.new("RGBA", (img.width + margin*2, img.height + margin*2), (0,0,0,0))
+        
+        alpha = img.split()[3]
+        
+        # MaxFilter boyutu her zaman TEK (ODD) sayı olmalıdır.
+        def force_odd(n):
+            n = int(n)
+            return n if n % 2 != 0 else n + 1
+
+        # Dış Işıma (Genişlik kontrolü: dilation ve blur)
+        ambient_mask = alpha.filter(ImageFilter.MaxFilter(force_odd(dilation)))
+        outer_glow = Image.merge("RGBA", (
+            Image.new("L", img.size, color[0]), Image.new("L", img.size, color[1]), Image.new("L", img.size, color[2]),
+            ambient_mask
+        ))
+        
+        # İç Işıma (Daha sıkı)
+        inner_mask = alpha.filter(ImageFilter.MaxFilter(force_odd(dilation//2 + 2)))
+        inner_glow = Image.merge("RGBA", (
+            Image.new("L", img.size, color[0]), Image.new("L", img.size, color[1]), Image.new("L", img.size, color[2]),
+            inner_mask
+        ))
+        
+        glow_canvas.paste(outer_glow, (margin, margin), outer_glow)
+        glow_canvas = glow_canvas.filter(ImageFilter.GaussianBlur(blur))
+        
+        inner_layer = Image.new("RGBA", glow_canvas.size, (0,0,0,0))
+        inner_layer.paste(inner_glow, (margin, margin), inner_glow)
+        inner_layer = inner_layer.filter(ImageFilter.GaussianBlur(int(blur/3) + 1))
+        
+        glow_canvas.alpha_composite(inner_layer)
+        r, g, b, a = glow_canvas.split()
+        a = a.point(lambda i: int(i * (color[3]/150.0))) 
+        glow_canvas = Image.merge("RGBA", (r, g, b, a))
+        
+        canvas.alpha_composite(glow_canvas, (int(center[0] - glow_canvas.width//2), int(center[1] - glow_canvas.height//2)))
+
     def draw_glow(self, canvas, pos, radius, color):
-        """Standard UEFA radial glow."""
-        x, y = pos
-        glow = Image.new("RGBA", (radius*4, radius*4), (0,0,0,0))
-        d = ImageDraw.Draw(glow)
-        for r in range(radius, 0, -2):
-            alpha = int(color[3] * (1 - r/radius))
-            d.ellipse([2*radius-r, 2*radius-r, 2*radius+r, 2*radius+r], fill=(color[0], color[1], color[2], alpha))
-        glow = glow.filter(ImageFilter.GaussianBlur(15))
-        canvas.alpha_composite(glow, (x - 2*radius, y - 2*radius))
+        """Legacy radial glow."""
+        pass
