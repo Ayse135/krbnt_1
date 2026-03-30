@@ -56,7 +56,9 @@ async def generate_banner(
             "FENERBAHÇE": "3",
             "TRABZONSPOR": "4",
             "BAŞAKŞEHİR": "5",
-            "SAMSUNSPOR": "6"
+            "SAMSUNSPOR": "6",
+            "GAZİANTEP FK": "1",
+            "RİZESPOR": "4"
         }
         
         l1_id = logo_map.get(team_1.upper(), "1")
@@ -74,26 +76,11 @@ async def generate_banner(
             "logo_2_path": f"/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/logos/logo_{l2_id}.png"
         }
         
-        filename = f"ziraat_{size}.{'gif' if size in ['320x100', '300x50'] else 'png'}"
-        final_path = OUTPUT_DIR / filename
+        # Dispatch to the modular engine
+        generated_path = ENGINE.generate(data, size_key=size, league=league)
+        filename = os.path.basename(generated_path)
         
-        if size == "320x100":
-            gif_path = ENGINE.generate_320x100(data, league=league)
-            import shutil
-            shutil.copy(gif_path, str(final_path))
-        elif size == "300x50":
-            gif_path = ENGINE.generate_300x50(data, league=league)
-            import shutil
-            shutil.copy(gif_path, str(final_path))
-        else:
-            if size == "120x600":
-                img = ENGINE.generate_120x600(data, league=league)
-            else:
-                img = ENGINE.generate_1200x628(data, league=league)
-            
-            img.save(str(final_path), format="PNG")
-        
-        # Statik URL döndür (Base64 yerine)
+        # Static URL döndür
         return {
             "status": "success",
             "imageUrl": f"http://127.0.0.1:8000/output/{filename}?v={os.urandom(4).hex()}"
