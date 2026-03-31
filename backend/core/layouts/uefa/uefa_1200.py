@@ -58,12 +58,15 @@ class UEFA1200(BaseLayout):
                 font_title = ImageFont.truetype(f_title, 55)
                 draw.text(((width - draw.textlength(title, font=font_title)) // 2, 30), title, font=font_title, fill="white")
             
-            day_text = data.get('day', 'PAZARTESİ').upper()
+            # Day & Hour (PSD: Saira Condensed Bold, 87.48px)
+            day_text = data.get('day', 'Pazartesi').capitalize()
             hour_text = data.get('hour', '20:30')
-            font_info = ImageFont.truetype(f_saira, 60)
+            
+            f_saira_cond = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
+            font_info = ImageFont.truetype(f_saira_cond, 88)
             
             draw.text(((width - draw.textlength(day_text, font=font_info)) // 2, 160), day_text, font=font_info, fill="#06BF50")
-            draw.text(((width - draw.textlength(hour_text, font=font_info)) // 2, 222), hour_text, font=font_info, fill="white")
+            draw.text(((width - draw.textlength(hour_text, font=font_info)) // 2, 235), hour_text, font=font_info, fill="white")
         except Exception as e:
             print(f"Typo Error: {e}")
 
