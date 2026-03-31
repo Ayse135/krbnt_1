@@ -41,5 +41,8 @@ class BannerEngine:
             elif size_key == "120x600":
                 from .layouts.uefa.uefa_120_600 import UEFA120_600
                 return UEFA120_600(self).render(data)
+            elif size_key == "320x100":
+                from .layouts.uefa.uefa_320_100 import UEFA320_100
+                return UEFA320_100(self).render(data)
             
         raise ValueError(f"Geçersiz hiyerarşi: {league} - {size_key}")
