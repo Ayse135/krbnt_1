@@ -1,6 +1,6 @@
 import os
 import json
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
 
 class BaseLayout:
     def __init__(self, engine):
@@ -62,3 +62,50 @@ class BaseLayout:
 
     def render(self, data):
         raise NotImplementedError("Layout classes must implement render(data)")
+
+    def draw_mask_glow(self, canvas, img, center, color, dilation=15, blur=30):
+        """Logonun/Oyuncunun çevresini saran konfigüre edilebilir neon hale efekti."""
+        if img.mode != "RGBA":
+            img = img.convert("RGBA")
+        
+        margin = blur + 50
+        glow_canvas = Image.new("RGBA", (img.width + margin*2, img.height + margin*2), (0,0,0,0))
+        
+        alpha = img.split()[3]
+        
+        # MaxFilter boyutu her zaman TEK (ODD) sayı olmalıdır.
+        def force_odd(n):
+            n = int(n)
+            return n if n % 2 != 0 else n + 1
+
+        # Dış Işıma (Genişlik kontrolü: dilation ve blur)
+        # alpha maskesine genişletme uygula
+        ambient_mask = alpha.filter(ImageFilter.MaxFilter(force_odd(dilation)))
+        outer_glow = Image.merge("RGBA", (
+            Image.new("L", img.size, color[0]), Image.new("L", img.size, color[1]), Image.new("L", img.size, color[2]),
+            ambient_mask
+        ))
+        
+        # İç Işıma (Daha sıkı)
+        inner_mask = alpha.filter(ImageFilter.MaxFilter(force_odd(dilation//2 + 2)))
+        inner_glow = Image.merge("RGBA", (
+            Image.new("L", img.size, color[0]), Image.new("L", img.size, color[1]), Image.new("L", img.size, color[2]),
+            inner_mask
+        ))
+        
+        glow_canvas.paste(outer_glow, (margin, margin), outer_glow)
+        glow_canvas = glow_canvas.filter(ImageFilter.GaussianBlur(blur))
+        
+        inner_layer = Image.new("RGBA", glow_canvas.size, (0,0,0,0))
+        inner_layer.paste(inner_glow, (margin, margin), inner_glow)
+        inner_layer = inner_layer.filter(ImageFilter.GaussianBlur(int(blur/3) + 1))
+        
+        glow_canvas.alpha_composite(inner_layer)
+        r, g, b, a = glow_canvas.split()
+        # Opaklığı ayarla
+        opacity_scale = color[3]/150.0 if len(color) > 3 else 1.0
+        a = a.point(lambda i: int(i * opacity_scale)) 
+        glow_canvas = Image.merge("RGBA", (r, g, b, a))
+        
+        # Merkeze yerleştir
+        canvas.alpha_composite(glow_canvas, (int(center[0] - glow_canvas.width//2), int(center[1] - glow_canvas.height//2)))
