@@ -15,6 +15,9 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Serve Static Frontend Files
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const storage = multer.memoryStorage();
@@ -69,7 +72,8 @@ app.post('/api/generate-asset', upload.fields([
 
         // Refined Asset Buffers with robust fallbacks
         const getB = (n) => {
-            const p = path.join(__dirname, '..', 'public', 'assets', 'branding', n);
+            // Updated path to look inside the frontend/public folder
+            const p = path.join(__dirname, '..', 'frontend', 'public', 'assets', 'branding', n);
             return fs.existsSync(p) ? fs.readFileSync(p) : null;
         };
 
@@ -81,7 +85,8 @@ app.post('/api/generate-asset', upload.fields([
             const bodyValue = req.body[fieldName];
             if (typeof bodyValue === 'string' && bodyValue !== "" && !bodyValue.startsWith('data:')) {
                 const folder = fieldName.includes('logo') ? 'logos' : 'players';
-                const assetPath = path.join(__dirname, '..', 'public', 'assets', folder, bodyValue);
+                // Updated path to look inside the frontend/public folder
+                const assetPath = path.join(__dirname, '..', 'frontend', 'public', 'assets', folder, bodyValue);
                 if (fs.existsSync(assetPath)) return fs.readFileSync(assetPath);
             }
 
@@ -505,8 +510,9 @@ app.post('/api/generate-interactive', upload.fields([
 
 app.get('/api/assets', (req, res) => {
     try {
-        const logosDir = path.join(__dirname, '..', 'public', 'assets', 'logos');
-        const playersDir = path.join(__dirname, '..', 'public', 'assets', 'players');
+        // Updated paths to look inside the frontend/public folder
+        const logosDir = path.join(__dirname, '..', 'frontend', 'public', 'assets', 'logos');
+        const playersDir = path.join(__dirname, '..', 'frontend', 'public', 'assets', 'players');
         
         const getFiles = (dir) => fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => !f.startsWith('.')) : [];
         

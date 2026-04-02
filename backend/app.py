@@ -2,6 +2,7 @@ from typing import Optional
 from fastapi import FastAPI, Form, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pathlib import Path
 import os
 import uvicorn
@@ -28,6 +29,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 # Output klasörünü oluştur
@@ -80,16 +82,36 @@ async def generate_banner(
         generated_path = ENGINE.generate(data, size_key=size, league=league)
         filename = os.path.basename(generated_path)
         
-        # Static URL döndür
+        # Relative URL döndür (Host bağımsızlığı için)
         return {
             "status": "success",
-            "imageUrl": f"http://127.0.0.1:8000/output/{filename}?v={os.urandom(4).hex()}"
+            "imageUrl": f"/output/{filename}"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Static dosyaları aç (Router en sonda olmalı yoksa POST'ları keser)
+# 1. Görüntüleme için Standart Statik Dosya Hizmeti
 app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
+
+# 2. İndirme Butonu için Zorunlu İndirme Rotası
+@app.get("/api/download/{filename}")
+async def download_file(filename: str):
+    file_path = OUTPUT_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Dosya bulunamadı")
+    
+    content_type = "image/png"
+    if filename.endswith(".gif"):
+        content_type = "image/gif"
+        
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type=content_type,
+        headers={"Access-Control-Expose-Headers": "Content-Disposition"}
+    )
+
+# Frontend mount (Her zaman en sonda olmalı yoksa diğer rotaları ezer!)
 app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
 if __name__ == "__main__":
