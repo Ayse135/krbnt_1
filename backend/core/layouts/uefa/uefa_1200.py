@@ -51,22 +51,24 @@ class UEFA1200(BaseLayout):
                 self.draw_mask_glow(canvas, l_img, l["center"], color=(6, 191, 80, 220), dilation=35, blur=65)
                 canvas.alpha_composite(l_img, (l["center"][0] - l_img.width // 2, l["center"][1] - l_img.height // 2))
 
-        # 5. Yazılar (Title overlap fix)
+        # 5. Yazılar (Dynamic Title & Space Refinement)
         try:
             title = data.get('match_title', '').upper()
-            if title:
-                font_title = ImageFont.truetype(f_title, 55)
-                draw.text(((width - draw.textlength(title, font=font_title)) // 2, 30), title, font=font_title, fill="white")
+            f_saira_cond = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
             
-            # Day & Hour (PSD: Saira Condensed Bold, 87.48px)
+            if title:
+                # Dinamik başlık çizimi (Otomatik sığdırma ve satır bölme)
+                self.draw_dynamic_title(draw, title, f_saira_cond, max_width=1000, start_y=30)
+            
+            # Day & Hour (Shifted Up: Old Y was 160/235)
             day_text = data.get('day', 'Pazartesi').capitalize()
             hour_text = data.get('hour', '20:30')
             
-            f_saira_cond = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
             font_info = ImageFont.truetype(f_saira_cond, 88)
             
-            draw.text(((width - draw.textlength(day_text, font=font_info)) // 2, 160), day_text, font=font_info, fill="#06BF50")
-            draw.text(((width - draw.textlength(hour_text, font=font_info)) // 2, 235), hour_text, font=font_info, fill="white")
+            # Yeni Pozisyonlar: UEFA Logosuyla çakışmaması için yukarı alındı
+            draw.text(((width - draw.textlength(day_text, font=font_info)) // 2, 130), day_text, font=font_info, fill="#06BF50")
+            draw.text(((width - draw.textlength(hour_text, font=font_info)) // 2, 205), hour_text, font=font_info, fill="white")
         except Exception as e:
             print(f"Typo Error: {e}")
 
@@ -123,6 +125,62 @@ class UEFA1200(BaseLayout):
         render_x = center_x - (new_w // 2)
         render_y = target_y - new_bbox[1]
         canvas.alpha_composite(img, (int(render_x), int(render_y)))
+
+    def draw_dynamic_title(self, draw, text, font_path, max_width, start_y):
+        """Metni genişliğe göre böler, gerekirse küçültür ve ortalı şekilde çizer."""
+        base_size = 65
+        padding = 10
+        width = 1200
+        
+        # 1. Metni bölme (Kelimelere göre)
+        words = text.split()
+        lines = []
+        current_line = []
+        
+        font = ImageFont.truetype(font_path, base_size)
+        
+        for word in words:
+            test_line = " ".join(current_line + [word])
+            if draw.textlength(test_line, font=font) <= max_width:
+                current_line.append(word)
+            else:
+                if current_line:
+                    lines.append(" ".join(current_line))
+                    current_line = [word]
+                else:
+                    # Tek bir kelime bile sığmıyorsa (çok uzun kelime), zorla kes
+                    lines.append(word)
+                    current_line = []
+        
+        if current_line:
+            lines.append(" ".join(current_line))
+            
+        # 2. Eğer 2 satırdan fazlaysa veya sığmıyorsa fontu küçült
+        while (len(lines) > 2 or any(draw.textlength(line, font=font) > max_width for line in lines)) and base_size > 30:
+            base_size -= 5
+            font = ImageFont.truetype(font_path, base_size)
+            # Metni yeni boyutla tekrar böl (opsiyonel ama daha doğru)
+            lines = []
+            current_line = []
+            for word in words:
+                test_line = " ".join(current_line + [word])
+                if draw.textlength(test_line, font=font) <= max_width:
+                    current_line.append(word)
+                else:
+                    if current_line:
+                        lines.append(" ".join(current_line))
+                        current_line = [word]
+                    else:
+                        lines.append(word)
+                        current_line = []
+            if current_line: lines.append(" ".join(current_line))
+
+        # 3. Çizim
+        current_y = start_y
+        for line in lines[:2]: # Maksimum 2 satır
+            w_line = draw.textlength(line, font=font)
+            draw.text(((width - w_line) // 2, current_y), line, font=font, fill="white")
+            current_y += base_size + padding
 
     def draw_mask_glow(self, canvas, img, center, color, dilation=15, blur=30):
         """Logonun/Oyuncunun çevresini saran konfigüre edilebilir neon hale efekti."""

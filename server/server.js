@@ -18,6 +18,9 @@ app.use(express.json());
 // Serve Static Frontend Files
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
+// Serve Output Files from Backend Output Directory
+app.use('/output', express.static(path.join(__dirname, '..', 'backend', 'output')));
+
 const storage = multer.memoryStorage();
 const upload = multer({
     storage: storage,

@@ -39,22 +39,22 @@ class UEFA320_100(BaseLayout):
         self.draw_branding(canvas, show_hemen_oyna=False)
         
         # 1. Match Title (Centered, 2 Lines)
-        f_monument = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/ziraat/MonumentExtended-Ultrabold.otf"
+        f_saira = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
         title = data.get('match_title', '').upper()
         if title:
-            font_title = ImageFont.truetype(f_monument, 14)
+            # Saira fontu için daha büyük boyut (Max Visibility)
+            font_title = ImageFont.truetype(f_saira, 30)
             draw = ImageDraw.Draw(canvas)
             
-            # Simple 2-line split logic
+            # Kelimelere göre bölme
             words = title.split()
             mid = len(words) // 2
             line1 = " ".join(words[:mid])
             line2 = " ".join(words[mid:])
             
-            # Draw both lines centered
-            # Center of canvas is 160, 50
-            draw.text((w/2 + 20, h/2 - 12), line1, font=font_title, fill="white", anchor="mm", align="center")
-            draw.text((w/2 + 20, h/2 + 12), line2, font=font_title, fill="white", anchor="mm", align="center")
+            # Nesine logosunu dengelemek için hafif sağa offsetli (170) ama daha ortalı görünüm
+            draw.text((170, h/2 - 15), line1, font=font_title, fill="white", anchor="mm", align="center")
+            draw.text((170, h/2 + 15), line2, font=font_title, fill="white", anchor="mm", align="center")
             
         return canvas
 

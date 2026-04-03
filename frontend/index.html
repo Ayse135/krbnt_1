@@ -533,7 +533,7 @@
                 const realFilename = urlObj.pathname.split('/').pop();
                 targetImg.setAttribute('data-filename', realFilename);
                 
-                targetImg.src = data.imageUrl;
+                targetImg.src = data.imageUrl + '?t=' + new Date().getTime();
                 targetImg.classList.remove('hidden');
                 targetEmpty.classList.add('hidden');
                 
