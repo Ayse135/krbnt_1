@@ -18,6 +18,35 @@ app.use(express.json());
 // Serve Static Frontend Files
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
+// Proxy for /generate-banner: Forward requests to Python Backend (Port 8000)
+app.post('/generate-banner', upload.any(), async (req, res) => {
+    try {
+        const formData = new FormData();
+        Object.entries(req.body).forEach(([key, value]) => formData.append(key, value));
+        
+        // If there are files, we should forward them as well
+        if (req.files) {
+            for (const fieldname in req.files) {
+                req.files[fieldname].forEach(file => {
+                    const blob = new Blob([file.buffer], { type: file.mimetype });
+                    formData.append(fieldname, blob, file.originalname);
+                });
+            }
+        }
+
+        const response = await fetch('http://127.0.0.1:8000/generate-banner', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (e) {
+        console.error("[Proxy Error]:", e.message);
+        res.status(500).json({ status: "error", detail: "Python backend connection failed." });
+    }
+});
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const storage = multer.memoryStorage();
