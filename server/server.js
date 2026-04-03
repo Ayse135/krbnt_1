@@ -18,6 +18,12 @@ app.use(express.json());
 // Serve Static Frontend Files
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }
+});
+
 // Proxy for /generate-banner: Forward requests to Python Backend (Port 8000)
 app.post('/generate-banner', upload.any(), async (req, res) => {
     try {
@@ -48,12 +54,6 @@ app.post('/generate-banner', upload.any(), async (req, res) => {
 });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const storage = multer.memoryStorage();
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }
-});
 
 // AI artık hangi ölçü için tasarım yaptığını biliyor
 const extractDesignSpecs = async (userPrompt, width, height) => {
