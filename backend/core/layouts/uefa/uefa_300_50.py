@@ -14,16 +14,24 @@ class UEFA300_50(BaseLayout):
         frame2 = self.render_scene_2(data, width, height, scale)
         frame3 = self.render_scene_3(data, width, height, scale)
         
-        # 2. Downsample and Sharpen each frame
-        def post_process(img):
+        # 2. Downsample and Sharpen each frame + Add Branding at 1x
+        def post_process(img, scene_id):
             img = img.resize((sw, sh), Image.Resampling.LANCZOS)
             from PIL import ImageFilter
             # Apply subtle sharpening to restore clarity after downsampling
-            return img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+            img = img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+            
+            # Draw branding at 1x for maximum sharpness
+            self.draw_nesine(img, scale=1)
+            if scene_id != 1:
+                self.draw_uefa(img, scale=1)
+                self.draw_hemen_oyna(img, scale=1)
+                
+            return img.convert("RGB")
 
-        f1 = post_process(frame1)
-        f2 = post_process(frame2)
-        f3 = post_process(frame3)
+        f1 = post_process(frame1, 1)
+        f2 = post_process(frame2, 2)
+        f3 = post_process(frame3, 3)
         
         output_dir = os.path.join(os.path.dirname(__file__), "../../../output")
         os.makedirs(output_dir, exist_ok=True)
@@ -72,7 +80,7 @@ class UEFA300_50(BaseLayout):
     def render_scene_1(self, data, w, h, scale):
         """Scene 1: Nesine + 2-Line Title."""
         canvas = self.get_base_canvas(w, h)
-        self.draw_nesine(canvas, scale=scale)
+        # Branding is now handled in post_process (1x scale)
         
         from PIL import ImageDraw, ImageFont
         draw = ImageDraw.Draw(canvas)
@@ -96,9 +104,7 @@ class UEFA300_50(BaseLayout):
     def render_scene_2(self, data, w, h, scale):
         """Scene 2: Nesine + UEFA + Hemen Oyna + Teams + Info."""
         canvas = self.get_base_canvas(w, h)
-        self.draw_nesine(canvas, scale=scale)
-        self.draw_uefa(canvas, scale=scale) 
-        self.draw_hemen_oyna(canvas, scale=scale)
+        # Branding is now handled in post_process (1x scale)
         
         from PIL import ImageDraw, ImageFont
         draw = ImageDraw.Draw(canvas)
@@ -150,11 +156,6 @@ class UEFA300_50(BaseLayout):
             p2.thumbnail((95 * scale, 95 * scale), Image.Resampling.LANCZOS)
             self.draw_mask_glow(canvas, p2, (208 * scale, 4 * scale + p2.height//2), color=glow_color, dilation=1 * scale, blur=1 * scale)
             canvas.alpha_composite(p2, (int(208 * scale - p2.width//2), int(4 * scale)))
-        
-        # 2. Branding (Top Layer)
-        self.draw_nesine(canvas, scale=scale)
-        self.draw_uefa(canvas, scale=scale)
-        self.draw_hemen_oyna(canvas, scale=scale)
         
         # 3. Match Info
         from PIL import ImageDraw, ImageFont

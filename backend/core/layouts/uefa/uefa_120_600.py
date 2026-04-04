@@ -39,24 +39,34 @@ class UEFA120_600(BaseLayout):
         try:
             title = data.get('match_title', '').upper()
             if title:
-                font_title = ImageFont.truetype(f_title, 14 * scale)
+                # Reduced base size from 14 to 11 for better 120px width support
+                base_fs = 11
+                font_title = ImageFont.truetype(f_title, base_fs * scale)
                 words = title.split()
                 lines = []
                 current_line = []
+                
+                # Wrapping logic
                 for word in words:
                     test_line = ' '.join(current_line + [word])
                     if draw.textlength(test_line, font=font_title) < 100 * scale:
                         current_line.append(word)
                     else:
-                        lines.append(' '.join(current_line))
+                        if current_line:
+                            lines.append(' '.join(current_line))
                         current_line = [word]
                 lines.append(' '.join(current_line))
+                
+                # Auto-scaling loop for extremely long words
+                while any(draw.textlength(l, font=font_title) > 105 * scale for l in lines) and base_fs > 7:
+                    base_fs -= 0.5
+                    font_title = ImageFont.truetype(f_title, int(base_fs * scale))
                 
                 curr_y = 25 * scale
                 for line in lines[:3]:
                     w_l = draw.textlength(line, font=font_title)
                     draw.text(((width - w_l) // 2, curr_y), line, font=font_title, fill="white")
-                    curr_y += 18 * scale
+                    curr_y += (base_fs + 4) * scale
         except Exception as e:
             print(f"Title Error: {e}")
 
@@ -86,11 +96,8 @@ class UEFA120_600(BaseLayout):
         except Exception as e:
             print(f"Info Error: {e}")
 
-        # 6. UEFA Logo - y=252
-        if os.path.exists(u_logo_path):
-            u_img = Image.open(u_logo_path).convert("RGBA")
-            u_img.thumbnail((50 * scale, 70 * scale), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(u_img, ((width - u_img.width) // 2, 252 * scale))
+        # 6. UEFA Logo (Moved to 1x Post-Processing)
+        pass
 
         # 7. Akıllı Oyuncu Yerleşimi (Heads at y=324)
         players_data = [
@@ -102,24 +109,36 @@ class UEFA120_600(BaseLayout):
                 p_img = Image.open(p["path"]).convert("RGBA")
                 self.smart_position_player(canvas, p_img, p["center_x"], p["target_y"], scale)
 
-        # 8. Hemen Oyna - y=492
-        ho_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/hemen_oyna.png"
-        if os.path.exists(ho_path):
-            ho_img = Image.open(ho_path).convert("RGBA")
-            ho_img.thumbnail((104 * scale, 33 * scale), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(ho_img, ((width - ho_img.width) // 2, 492 * scale))
-
-        # 9. Nesine Branding Footer - y=540
-        draw.rectangle([0, 540 * scale, width, 600 * scale], fill=(252, 215, 0))
-        n_logo_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/nesine_logo.png"
-        if os.path.exists(n_logo_path):
-            n_img = Image.open(n_logo_path).convert("RGBA")
-            n_img.thumbnail((100 * scale, 50 * scale), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(n_img, ((width - n_img.width) // 2, int(540 * scale + (60 * scale - n_img.height) // 2)))
+        # 8. Branding (Moved to 1x post-process)
+        pass
 
         # 10. Post-Processing: Downsample & Sharpen
         final_canvas = canvas.resize((sw, sh), Image.Resampling.LANCZOS)
         final_canvas = final_canvas.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+        
+        # 11. Add Branding at 1x resolution for maximum sharpness
+        draw_1x = ImageDraw.Draw(final_canvas)
+        
+        # A. UEFA Logo (y=252)
+        if os.path.exists(u_logo_path):
+            u_img = Image.open(u_logo_path).convert("RGBA")
+            u_img.thumbnail((50, 70), Image.Resampling.LANCZOS)
+            final_canvas.alpha_composite(u_img, ((sw - u_img.width) // 2, 252))
+            
+        # B. Hemen Oyna (y=492)
+        ho_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/hemen_oyna.png"
+        if os.path.exists(ho_path):
+            ho_img = Image.open(ho_path).convert("RGBA")
+            ho_img.thumbnail((104, 33), Image.Resampling.LANCZOS)
+            final_canvas.alpha_composite(ho_img, ((sw - ho_img.width) // 2, 492))
+            
+        # C. Nesine Footer (y=540)
+        draw_1x.rectangle([0, 540, sw, 600], fill=(252, 215, 0))
+        n_logo_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/nesine_logo.png"
+        if os.path.exists(n_logo_path):
+            n_img = Image.open(n_logo_path).convert("RGBA")
+            n_img.thumbnail((100, 50), Image.Resampling.LANCZOS)
+            final_canvas.alpha_composite(n_img, ((sw - n_img.width) // 2, int(540 + (60 - n_img.height) // 2)))
 
         # 11. Save Output
         out_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "output", "banner_uefa_120_600.png")

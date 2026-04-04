@@ -15,15 +15,21 @@ class UEFA320_100(BaseLayout):
         frame2 = self.render_scene_2(data, width, height, scale)
         frame3 = self.render_scene_3(data, width, height, scale)
         
-        # 2. Downsample and Sharpen each frame
-        def post_process(img):
+        # 2. Downsample and Sharpen each frame + Add Branding at 1x
+        def post_process(img, scene_id):
             img = img.resize((sw, sh), Image.Resampling.LANCZOS)
             # Apply subtle sharpening to restore clarity after downsampling
-            return img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+            img = img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+            
+            # Draw branding at 1x for maximum sharpness
+            show_ho = scene_id != 1
+            self.draw_branding(img, show_hemen_oyna=show_ho, scale=1)
+            
+            return img.convert("RGB")
 
-        f1 = post_process(frame1)
-        f2 = post_process(frame2)
-        f3 = post_process(frame3)
+        f1 = post_process(frame1, 1)
+        f2 = post_process(frame2, 2)
+        f3 = post_process(frame3, 3)
         
         output_dir = os.path.join(os.path.dirname(__file__), "../../../output")
         os.makedirs(output_dir, exist_ok=True)
@@ -48,7 +54,7 @@ class UEFA320_100(BaseLayout):
     def render_scene_1(self, data, w, h, scale):
         """Scene 1: Match Title Focus (2 Lines)."""
         canvas = self.get_base_canvas(w, h)
-        self.draw_branding(canvas, show_hemen_oyna=False, scale=scale)
+        # Branding is now handled in post_process (1x scale)
         
         # 1. Match Title (Centered, 2 Lines)
         f_saira = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
@@ -109,9 +115,6 @@ class UEFA320_100(BaseLayout):
             self.draw_mask_glow(canvas, l2, (210 * scale, 45 * scale), color=(6, 191, 80, 230), dilation=6 * scale, blur=15 * scale)
             canvas.alpha_composite(l2, (210 * scale - l2.width//2, 45 * scale - l2.height//2))
         
-        # 2. Branding (Top Layer)
-        self.draw_branding(canvas, show_hemen_oyna=True, scale=scale)
-        
         # 3. Match Info (Center)
         self.draw_match_info_center(canvas, data, scale)
             
@@ -136,9 +139,6 @@ class UEFA320_100(BaseLayout):
             p2.thumbnail((140 * scale, 140 * scale), Image.Resampling.LANCZOS)
             self.draw_mask_glow(canvas, p2, (222 * scale, 15 * scale + p2.height//2), color=(6, 191, 80, 180), dilation=5 * scale, blur=15 * scale)
             canvas.alpha_composite(p2, (222 * scale - p2.width//2, 15 * scale))
-        
-        # 2. Branding (Top Layer)
-        self.draw_branding(canvas, show_hemen_oyna=True, scale=scale)
         
         # 3. Match Info (Center)
         self.draw_match_info_center(canvas, data, scale)
