@@ -19,17 +19,15 @@ class Ziraat300(ZiraatBase):
             img = img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=50, threshold=3))
             
             # 2. Add Branding at 1x scale for maximum sharpness
-            # Nesine Area (0, 0, 66, 50) and Hemen Oyna (228, 10, 62, 30)
-            self.draw_nesine_area_tiny(img, (0, 0, 66, 50), (228, 10, 62, 30), 1)
+            # Nesine Area (0, 0, 66, 50) and Hemen Oyna (233, 16, 60, 19)
+            self.draw_nesine_area_tiny(img, (0, 0, 66, 50), (233, 16, 60, 19), 1)
 
             if scene_id == 1:
-                # Ziraat Logo (centered in the remaining middle space [66, 228])
+                # Ziraat Logo (122x47 at [88, 1])
                 z_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ztk_yatay_logo.png")
                 if os.path.exists(z_path):
-                    z_img = Image.open(z_path).convert("RGBA")
-                    z_img.thumbnail((120, 35), Image.Resampling.LANCZOS)
-                    cx = 66 + (228 - 66 - z_img.width)//2
-                    img.alpha_composite(z_img, (int(cx), (sh - z_img.height)//2))
+                    z_img = Image.open(z_path).convert("RGBA").resize((122, 47), Image.Resampling.LANCZOS)
+                    img.alpha_composite(z_img, (88, 1))
                 
             return img.convert("RGB")
 
@@ -61,29 +59,71 @@ class Ziraat300(ZiraatBase):
         pass
 
     def draw_scene_2(self, frame, data, scale):
-        """Micro Side-by-side Players and Logos."""
-        self.draw_player_micro(frame, data, 1, (75 * scale, 2 * scale, 38 * scale, 48 * scale), (115 * scale, 10 * scale, 35 * scale, 35 * scale), scale)
-        self.draw_player_micro(frame, data, 2, (150 * scale, 2 * scale, 38 * scale, 48 * scale), (190 * scale, 10 * scale, 35 * scale, 35 * scale), scale)
+        """Micro Side-by-side Players and Logos (Ground Truth)."""
+        # Exact PSD coordinates from 2.psd
+        # Left Side (Player 1 then Logo 1)
+        self.draw_player_micro(frame, data, 1, (81 * scale, 2 * scale, 35 * scale, 46 * scale), (112 * scale, 10 * scale, 33 * scale, 36 * scale), scale)
+        # Right Side (Logo 2 then Player 2) - Logo 2 enlarged to 33px to match Logo 1
+        self.draw_player_micro(frame, data, 2, (181 * scale, 2 * scale, 35 * scale, 46 * scale), (161 * scale, 10 * scale, 33 * scale, 36 * scale), scale)
 
     def draw_scene_3(self, frame, data, scale):
         """Match Info Grid shifted for Left Branding."""
         draw = ImageDraw.Draw(frame)
         t1, t2 = data.get("team_1", "TEAM 1").upper(), data.get("team_2", "TEAM 2").upper()
         hour, day = data.get("hour", "20:30"), data.get("day", "PAZARTESİ").upper()
+
+        f_reg = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/ziraat/MonumentExtended-Regular.otf"
+        f_bold = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/ziraat/MonumentExtended-Ultrabold.otf"
         
-        try:
-            f_saira = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
-            f_team = ImageFont.truetype(self.font_bold, int(14 * scale))
-            f_info = ImageFont.truetype(f_saira, int(12 * scale))
-            
-            # Left after Nesine (X=75)
-            draw.text((75 * scale, 5 * scale), t1, font=f_team, fill="black")
-            draw.text((75 * scale, 25 * scale), t2, font=f_team, fill="black")
-            
-            # Right before Hemen Oyna (X=170)
-            draw.text((170 * scale, 7 * scale), hour, font=f_team, fill="black")
-            draw.text((170 * scale, 27 * scale), day, font=f_info, fill="#06BF50")
-        except: pass
+        # Helper: Find font size to fit width
+        def get_font_fit(text, base_size, max_w, font_path):
+            s = base_size
+            f = ImageFont.truetype(font_path, int(s * scale))
+            while draw.textlength(text, font=f) > max_w * scale and s > 8:
+                s -= 1
+                f = ImageFont.truetype(font_path, int(s * scale))
+            return f
+
+        # Column 1 (X=70): Teams (Stacked per screenshot)
+        # Reduced target width to 95px to create gap before Time Info (at X=175)
+        target_w = 95 * scale
+        fs = 11
+        f_team = ImageFont.truetype(f_bold, int(fs * scale))
+        while (draw.textlength(t1, font=f_team) > target_w or draw.textlength(t2, font=f_team) > target_w) and fs > 8:
+            fs -= 1
+            f_team = ImageFont.truetype(f_bold, int(fs * scale))
+        
+        ty_teams = 13 * scale
+        # Draw both with exact same width (target_w) using letter spacing
+        self.draw_text_with_spacing(draw, t1, (70 * scale, ty_teams), f_team, fill="black", target_width=target_w)
+        self.draw_text_with_spacing(draw, t2, (70 * scale, ty_teams + 13 * scale), f_team, fill="black", target_width=target_w)
+        
+        # Column 2 (X=175): Match Info (Time block 38px width)
+        # Hour (Master) - 15px per PSD
+        f_hour = ImageFont.truetype(f_reg, 15 * scale)
+        hw = draw.textlength(hour, font=f_hour)
+        
+        # Day (Match width of hour)
+        ds = 8
+        f_day = ImageFont.truetype(f_reg, int(ds * scale))
+        cur_w = draw.textlength(day, font=f_day)
+        
+        if cur_w > hw:
+            while draw.textlength(day, font=f_day) > hw and ds > 4:
+                ds -= 0.5
+                f_day = ImageFont.truetype(f_reg, int(ds * scale))
+        else:
+            while draw.textlength(day, font=f_day) < hw and ds < 15:
+                ds += 0.5
+                f_day = ImageFont.truetype(f_reg, int(ds * scale))
+
+        # Position (X=175 to avoid overlap with HO and balance centered gap)
+        tx = 175 * scale
+        ty = 13 * scale
+        draw.text((tx, ty), hour, font=f_hour, fill="black")
+        # Center Day under Hour
+        dw = draw.textlength(day, font=f_day)
+        draw.text((tx + (hw - dw)//2, ty + 16 * scale), day, font=f_day, fill="black")
 
     def draw_player_micro(self, frame, data, index, bounds, logo_bounds, scale):
         px, py, pw, ph = bounds
@@ -125,14 +165,15 @@ class Ziraat300(ZiraatBase):
         draw.rectangle([bx, by, bx+bw, by+bh], fill=(251, 198, 0, 255))
         n_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "nesine_logo.png")
         if os.path.exists(n_logo_path):
-            n_img = Image.open(n_logo_path).convert("RGBA")
-            n_img.thumbnail((int(bw-6 * scale), int(bh-4 * scale)), Image.Resampling.LANCZOS)
-            frame.alpha_composite(n_img, (int(bx + (bw - n_img.width)//2), int(by + (bh - n_img.height)//2)))
+            n_img = Image.open(n_logo_path).convert("RGBA").resize((45, 23), Image.Resampling.LANCZOS)
+            # Center logo in yellow area or use exact PSD: (7, 14)
+            frame.alpha_composite(n_img, (7, 14))
             
         # Hemen Oyna
-        ho_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "hemen_oyna_320x100.png")
+        # Use specialized 300x50 asset for maximum sharpness (Native 60x19)
+        ho_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "assets", "templates", "hemen_oyna_300x50.png")
         if os.path.exists(ho_path):
-            ho_img = Image.open(ho_path).convert("RGBA").resize((int(hw), int(hh)), Image.Resampling.LANCZOS)
+            ho_img = Image.open(ho_path).convert("RGBA")
             frame.alpha_composite(ho_img, (int(hx), int(hy)))
 
     def save_gif_standard(self, frames, filename, durations):

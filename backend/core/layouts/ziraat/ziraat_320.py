@@ -31,16 +31,17 @@ class Ziraat320(ZiraatBase):
                 self.draw_nesine_area_gt(img, (129, 68, 60, 42), (137, 72, 45, 23), 1)
 
             elif scene_id == 2:
-                # Nesine (95, 68, 60, 42)
-                self.draw_nesine_area_gt(img, (95, 68, 60, 42), (103, 72, 45, 23), 1)
-                # Hemen Oyna (163, 70, 62, 20)
-                self.draw_hemen_oyna_badge(img, (163, 70, 62, 20), 1)
+                # Nesine (129, 68, 60, 42) - STACKED BOTTOM
+                self.draw_nesine_area_gt(img, (129, 68, 60, 42), (137, 72, 45, 23), 1)
+                # Hemen Oyna (129, 43, 62, 20) - STACKED TOP
+                self.draw_hemen_oyna_badge(img, (129, 43, 62, 20), 1)
 
             elif scene_id == 3:
-                # Nesine (110, 68, 60, 42)
-                self.draw_nesine_area_gt(img, (110, 68, 60, 42), (118, 72, 45, 23), 1)
-                # Hemen Oyna (175, 70, 62, 20)
-                self.draw_hemen_oyna_badge(img, (175, 70, 62, 20), 1)
+                # Nesine centered (X=130) and Hemen Oyna to its right
+                # Nesine Area (130, 68, 60, 42)
+                self.draw_nesine_area_gt(img, (130, 68, 60, 42), (138, 72, 45, 23), 1)
+                # Hemen Oyna (195, 70, 62, 20)
+                self.draw_hemen_oyna_badge(img, (195, 70, 62, 20), 1)
                 
             return img.convert("RGB")
 
@@ -72,9 +73,12 @@ class Ziraat320(ZiraatBase):
         pass
 
     def draw_scene_2(self, frame, data, scale):
-        """Scene 2: Players with Logos (Branding moved to post_process)."""
-        self.draw_player_with_logo(frame, data, 1, (9 * scale, 3 * scale, 64 * scale, 87 * scale), (68 * scale, 24 * scale, 55 * scale, 55 * scale), scale)
-        self.draw_player_with_logo(frame, data, 2, (243 * scale, 3 * scale, 64 * scale, 87 * scale), (200 * scale, 24 * scale, 55 * scale, 55 * scale), scale)
+        """Scene 2: Players with Logos beside them (Ground Truth)."""
+        # Exact PSD coordinates from 2.psd/3.psd
+        # Left Side
+        self.draw_player_with_logo(frame, data, 1, (9 * scale, 5 * scale, 64 * scale, 85 * scale), (70 * scale, 24 * scale, 43 * scale, 59 * scale), scale)
+        # Right Side
+        self.draw_player_with_logo(frame, data, 2, (243 * scale, 6 * scale, 64 * scale, 84 * scale), (199 * scale, 24 * scale, 57 * scale, 59 * scale), scale)
 
     def draw_scene_3(self, frame, data, scale):
         """Scene 3: Refined 2x2 Grid (Branding moved to post_process)."""
@@ -82,9 +86,10 @@ class Ziraat320(ZiraatBase):
         t1, t2 = data.get("team_1", "TEAM 1").upper(), data.get("team_2", "TEAM 2").upper()
         hour, day = data.get("hour", "20:30"), data.get("day", "PAZARTESİ").upper()
         
-        f_saira = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
+        f_reg = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/ziraat/MonumentExtended-Regular.otf"
+        f_bold = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/ziraat/MonumentExtended-Ultrabold.otf"
         
-        # Dynamic Scaling Helper
+        # Dynamic Scaling Helper for teams
         def get_font_scaled(text, base_size, max_w, font_path):
             s = base_size
             f = ImageFont.truetype(font_path, int(s * scale))
@@ -93,17 +98,47 @@ class Ziraat320(ZiraatBase):
                 f = ImageFont.truetype(font_path, int(s * scale))
             return f
 
-        # Column 1 (X=10): Teams
-        f_team1 = get_font_scaled(t1, 18, 100, self.font_bold)
-        f_team2 = get_font_scaled(t2, 18, 100, self.font_bold)
-        draw.text((10 * scale, 12 * scale), t1, font=f_team1, fill="black")
-        draw.text((10 * scale, 42 * scale), t2, font=f_team2, fill="black")
+        # Column 1 (X=13): Teams (Stacked per screenshot)
+        # PSD bounds: 13, 17, 170, 50. Width is 170.
+        target_w = 170 * scale
         
-        # Column 2 (X=245): Match Info (Using Saira for Info)
-        f_hour = get_font_scaled(hour, 18, 70, f_saira)
-        f_day = get_font_scaled(day, 14, 70, f_saira)
-        draw.text((245 * scale, 12 * scale), hour, font=f_hour, fill="black")
-        draw.text((245 * scale, 42 * scale), day, font=f_day, fill="#06BF50")
+        # Find font size that fits the longer team name into target_w
+        fs = 26
+        f_team = ImageFont.truetype(f_bold, int(fs * scale))
+        while (draw.textlength(t1, font=f_team) > target_w or draw.textlength(t2, font=f_team) > target_w) and fs > 12:
+            fs -= 1
+            f_team = ImageFont.truetype(f_bold, int(fs * scale))
+        
+        # Draw both with exact same width (target_w) using letter spacing
+        self.draw_text_with_spacing(draw, t1, (13 * scale, 20 * scale), f_team, fill="black", target_width=target_w)
+        self.draw_text_with_spacing(draw, t2, (13 * scale, 42 * scale), f_team, fill="black", target_width=target_w)
+        
+        # Column 2 (Right Side): Match Info
+        # 1. Hour (Master Width) - 25px per PSD
+        f_hour = ImageFont.truetype(f_reg, 25 * scale)
+        hw = draw.textlength(hour, font=f_hour)
+        
+        # 2. Day (Match width of hour)
+        ds = 12.5
+        f_day = ImageFont.truetype(f_reg, int(ds * scale))
+        cur_w = draw.textlength(day, font=f_day)
+        
+        if cur_w > hw:
+            while draw.textlength(day, font=f_day) > hw and ds > 4:
+                ds -= 0.5
+                f_day = ImageFont.truetype(f_reg, int(ds * scale))
+        else:
+            while draw.textlength(day, font=f_day) < hw and ds < 24:
+                ds += 0.5
+                f_day = ImageFont.truetype(f_reg, int(ds * scale))
+
+        # Position (X=220 approx for right-aligned block at 320 width)
+        tx = 220 * scale
+        ty = 25 * scale
+        draw.text((tx, ty), hour, font=f_hour, fill="black")
+        # Center Day under Hour width
+        dw = draw.textlength(day, font=f_day)
+        draw.text((tx + (hw - dw)//2, ty + 28 * scale), day, font=f_day, fill="black")
 
     def draw_player_with_logo(self, frame, data, index, p_bounds, l_bounds, scale):
         px, py, pw, ph = p_bounds
@@ -140,7 +175,8 @@ class Ziraat320(ZiraatBase):
         bx, by, bw, bh = box_bounds
         lx, ly, lw, lh = logo_bounds
         draw = ImageDraw.Draw(frame)
-        draw.rectangle([bx, by, bx+bw, by+bh], fill=(252, 215, 0, 255))
+        # Updated to #f8ba17 as requested
+        draw.rectangle([bx * scale, by * scale, (bx + bw) * scale, (by + bh) * scale], fill=(248, 186, 23, 255))
         
         n_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "nesine_logo.png")
         if os.path.exists(n_logo_path):
