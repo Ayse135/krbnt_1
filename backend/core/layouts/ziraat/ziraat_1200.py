@@ -27,12 +27,12 @@ class Ziraat1200(ZiraatBase):
             lx, ly = (width - z_img.width)//2, 26
             canvas.alpha_composite(z_img, (lx, ly))
 
-        # 3. Player Blocks (X=28 and X=870)
-        # Left: (28, 25, 303, 409), Logo: 1.5x size
-        self.draw_player_block(canvas, data, 1, (28, 25, 303, 409), (112, 337, 150, 178))
-        self.draw_player_block(canvas, data, 2, (870, 26, 303, 406), (926, 337, 177, 177))
+        # 3. Player Blocks (X=28 and X=870) - Adjusted for correct height (PSD inspection + feedback)
+        # Left: (28, 55, 303, 375), Logo: (137, 367, 100, 119)
+        self.draw_player_block(canvas, data, 1, (28, 55, 303, 375), (137, 367, 100, 119))
+        self.draw_player_block(canvas, data, 2, (870, 56, 303, 372), (956, 367, 118, 118))
 
-        # 4. Team Names (364, 196, 472, 113)
+        # 4. Team Names (364, 196, 472, 113) - PSD Ground Truth
         self.draw_match_typography(canvas, data, (364, 196, 472, 113))
 
         # 5. Match Info Boxes (506, 344, 189, 71)
@@ -61,16 +61,16 @@ class Ziraat1200(ZiraatBase):
         t_colors = self.get_team_colors(data.get(f"team_{index}"))
         p_path = data.get(f"player_{index}_path")
         
-        # A. Thin Yellow Outline
-        draw = ImageDraw.Draw(canvas)
-        draw.rectangle([lx, ly, lx+lw, ly+lh], outline=(252, 215, 0, 255), width=2)
+        # A. Classic Pill Backdrop (Bunu ilerde dinamik yapacağız - Şimdilik klasik)
+        # self.draw_dynamic_backdrop(canvas, (lx+5, ly+5, mask_size[0], mask_size[1]), t_colors["p"], t_colors["s"], 1)
         
-        # B. Pill Inner Background
-        mask_size = (lw-10, lh-10) # Slight offset for frame padding
-        pill_mask = self.create_player_mask(mask_size, radii=(max(40, mask_size[0]//2), 20, 20, 20))
+        # Simple Shape Background (Match original silhouette)
+        mask_size = (lw, lh) # Fill the entire block width/height
+        # Only top-left corner is rounded in original
+        pill_mask = self.create_player_mask(mask_size, radii=(int(mask_size[0] * 0.45), 0, 0, 0))
         pill_bg = Image.new("RGBA", mask_size, t_colors["p"])
         
-        # Aura waves (v3 style from assets)
+        # Aura waves (Legacy static waves)
         waves_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/backend/assets/templates/backdrop_waves_v3.png"
         if os.path.exists(waves_path):
             waves = Image.open(waves_path).convert("RGBA").resize(mask_size, Image.Resampling.LANCZOS)
@@ -78,13 +78,28 @@ class Ziraat1200(ZiraatBase):
             
         pill_final = Image.new("RGBA", mask_size, (0, 0, 0, 0))
         pill_final.paste(pill_bg, (0, 0), pill_mask)
-        canvas.alpha_composite(pill_final, (lx+5, ly+5))
+        canvas.alpha_composite(pill_final, (lx, ly))
         
-        # C. Player Masked (Pop-out kafa serbest)
+        # B. Black Outer Frame (Matches original)
+        draw = ImageDraw.Draw(canvas)
+        draw.rectangle([lx, ly, lx+lw, ly+lh], outline="black", width=3)
+        
+        # C. Player Image (Enlarged head / Scaled up)
         if p_path and os.path.exists(p_path):
-            p_img = ImageOps.fit(Image.open(p_path).convert("RGBA"), mask_size, Image.Resampling.LANCZOS, centering=(0.5, 0.0))
+            p_img_orig = Image.open(p_path).convert("RGBA")
+            # Zoom logic: Resize so width is 1.5x of mask width to make head much larger (closer look)
+            zoom = 1.5
+            new_w = int(mask_size[0] * zoom)
+            new_h = int(p_img_orig.height * (new_w / p_img_orig.width))
+            p_img_scaled = p_img_orig.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            
+            # Crop to mask_size, centering horizontally and shifting up slightly
+            left = (new_w - mask_size[0]) // 2
+            top = 0 # Head at top
+            p_img_cropped = p_img_scaled.crop((left, top, left + mask_size[0], top + mask_size[1]))
+            
             p_final = Image.new("RGBA", mask_size, (0, 0, 0, 0))
-            p_final.paste(p_img, (0, 0), pill_mask)
+            p_final.paste(p_img_cropped, (0, 0), pill_mask)
             canvas.alpha_composite(p_final, (lx+5, ly+5))
 
         # D. Team Logo Overlap
@@ -101,37 +116,44 @@ class Ziraat1200(ZiraatBase):
         bx, by, bw, bh = bounds
         draw = ImageDraw.Draw(canvas)
         try:
-            font_team = ImageFont.truetype(self.font_bold, 55)
             t1, t2 = data.get("team_1", "TEAM 1").upper(), data.get("team_2", "TEAM 2").upper()
             
-            # Draw stacked horizontally centered in the block
-            tw1 = draw.textlength(t1, font=font_team)
-            tw2 = draw.textlength(t2, font=font_team)
+            # Start at 72px
+            fs = 72
+            font_team = ImageFont.truetype(self.font_bold, fs)
             
-            draw.text((bx + (bw - tw1)//2, by), t1, font=font_team, fill="black")
-            draw.text((bx + (bw - tw2)//2, by + 55), t2, font=font_team, fill="black")
+            # Shrink-to-fit logic: If either name is wider than bw, scale down fs
+            while (draw.textlength(t1, font=font_team) > bw or draw.textlength(t2, font=font_team) > bw) and fs > 40:
+                fs -= 2
+                font_team = ImageFont.truetype(self.font_bold, fs)
+            
+            # Draw both with exact same width (bw)
+            # This uses letter spacing to "justify" the text to fill the width
+            self.draw_text_with_spacing(draw, t1, (bx, by), font_team, fill="black", target_width=bw)
+            self.draw_text_with_spacing(draw, t2, (bx, by + fs + 5), font_team, fill="black", target_width=bw)
+            
         except: pass
 
     def draw_match_info_boxes(self, canvas, data, bounds):
         bx, by, bw, bh = bounds
         draw = ImageDraw.Draw(canvas)
         try:
-            font_info = ImageFont.truetype(self.font_reg, 32)
+            # Match Info using the same family but Regular
+            font_info = ImageFont.truetype(self.font_reg, 40)
             hour, day = data.get("hour", "20:30"), data.get("day", "PAZARTESİ").upper()
             
-            # No more boxes - User requested removal (Kutuları kaldır)
             tw1 = draw.textlength(hour, font=font_info)
             draw.text((bx + (bw - tw1)//2, by), hour, font=font_info, fill="black")
             
             tw2 = draw.textlength(day, font=font_info)
-            draw.text((bx + (bw - tw2)//2, by + 40), day, font=font_info, fill="black")
+            draw.text((bx + (bw - tw2)//2, by + 45), day, font=font_info, fill="black")
         except: pass
 
     def draw_nesine_area(self, canvas, bounds):
         bx, by, bw, bh = bounds
         draw = ImageDraw.Draw(canvas)
-        # Yellow Box
-        draw.rectangle([bx, by, bx+bw, by+bh], fill=(252, 215, 0, 255))
+        # Updated to #fbc600 per user request
+        draw.rectangle([bx, by, bx+bw, by+bh], fill=(251, 198, 0, 255))
         # High-res Logo
         n_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "nesine_logo.png")
         if os.path.exists(n_logo_path):
