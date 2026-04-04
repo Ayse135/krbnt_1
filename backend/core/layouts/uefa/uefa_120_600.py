@@ -5,8 +5,10 @@ from ..base import BaseLayout
 
 class UEFA120_600(BaseLayout):
     def render(self, data):
-        """PSD-Perfect UEFA 120x600 Vertical Banner Replication."""
-        width, height = 120, 600
+        """UEFA 120x600 Vertical PNG Banner with Supersampling (2x)."""
+        sw, sh = 120, 600
+        scale = 2
+        width, height = sw * scale, sh * scale
         canvas = Image.new("RGBA", (width, height), (0, 0, 0, 255))
         draw = ImageDraw.Draw(canvas)
         
@@ -22,12 +24,14 @@ class UEFA120_600(BaseLayout):
         top_bg_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/psd_samples/uefa/120x600_png/120x600_bg_ust.png"
         if os.path.exists(top_bg_path):
             top_bg = Image.open(top_bg_path).convert("RGBA")
+            top_bg = top_bg.resize((width, height), Image.Resampling.LANCZOS)
             canvas.alpha_composite(top_bg, (0, 0))
             
         # Load and paste the custom bottom background (120x600_bg_alt.png)
         bot_bg_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/psd_samples/uefa/120x600_png/120x600_bg_alt.png"
         if os.path.exists(bot_bg_path):
             bot_bg = Image.open(bot_bg_path).convert("RGBA")
+            bot_bg = bot_bg.resize((width, height), Image.Resampling.LANCZOS)
             # Pasted over top/black since it's also 120x600 and likely semi-transparent
             canvas.alpha_composite(bot_bg, (0, 0))
 
@@ -35,102 +39,106 @@ class UEFA120_600(BaseLayout):
         try:
             title = data.get('match_title', '').upper()
             if title:
-                font_title = ImageFont.truetype(f_title, 14)
+                font_title = ImageFont.truetype(f_title, 14 * scale)
                 words = title.split()
                 lines = []
                 current_line = []
                 for word in words:
                     test_line = ' '.join(current_line + [word])
-                    if draw.textlength(test_line, font=font_title) < 100:
+                    if draw.textlength(test_line, font=font_title) < 100 * scale:
                         current_line.append(word)
                     else:
                         lines.append(' '.join(current_line))
                         current_line = [word]
                 lines.append(' '.join(current_line))
                 
-                curr_y = 25
+                curr_y = 25 * scale
                 for line in lines[:3]:
                     w_l = draw.textlength(line, font=font_title)
                     draw.text(((width - w_l) // 2, curr_y), line, font=font_title, fill="white")
-                    curr_y += 18
+                    curr_y += 18 * scale
         except Exception as e:
             print(f"Title Error: {e}")
 
         # 4. Team Logos (Side-by-Side at y=140)
         # Using the new "Power Glow" logic for high visibility
         logos_data = [
-            {"path": data.get("logo_1_path"), "center": (35, 140), "size": (48, 58)},
-            {"path": data.get("logo_2_path"), "center": (85, 140), "size": (48, 58)}
+            {"path": data.get("logo_1_path"), "center": (35 * scale, 140 * scale), "size": (48 * scale, 58 * scale)},
+            {"path": data.get("logo_2_path"), "center": (85 * scale, 140 * scale), "size": (48 * scale, 58 * scale)}
         ]
         for l in logos_data:
             if l["path"] and os.path.exists(l["path"]):
                 l_img = Image.open(l["path"]).convert("RGBA")
                 l_img.thumbnail(l["size"], Image.Resampling.LANCZOS)
                 # Refined logo glow (Reduced intensity and reach)
-                self.draw_mask_glow(canvas, l_img, l["center"], color=(6, 191, 80, 255), dilation=4, blur=16, intensity=2.2)
-                canvas.alpha_composite(l_img, (l["center"][0] - l_img.width // 2, l["center"][1] - l_img.height // 2))
+                self.draw_mask_glow(canvas, l_img, l["center"], color=(6, 191, 80, 255), dilation=4 * scale, blur=16 * scale, intensity=2.2)
+                canvas.alpha_composite(l_img, (int(l["center"][0] - l_img.width // 2), int(l["center"][1] - l_img.height // 2)))
 
         # 5. Match Info (Day Green, Hour White) - Centered between Logos (y=169) and UEFA (y=252)
         try:
             day_text = data.get('day', 'Pazartesi').capitalize()
             hour_text = data.get('hour', '20:30')
-            font_info = ImageFont.truetype(f_saira_cond, 30)
+            font_info = ImageFont.truetype(f_saira_cond, 30 * scale)
             
             # Precisely centered in the available ~80px gap
-            draw.text((60, 195), day_text, font=font_info, fill="#06BF50", anchor="mm")
-            draw.text((60, 225), hour_text, font=font_info, fill="white", anchor="mm")
+            draw.text((60 * scale, 195 * scale), day_text, font=font_info, fill="#06BF50", anchor="mm")
+            draw.text((60 * scale, 225 * scale), hour_text, font=font_info, fill="white", anchor="mm")
         except Exception as e:
             print(f"Info Error: {e}")
 
         # 6. UEFA Logo - y=252
         if os.path.exists(u_logo_path):
             u_img = Image.open(u_logo_path).convert("RGBA")
-            u_img.thumbnail((50, 70), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(u_img, ((width - u_img.width) // 2, 252))
+            u_img.thumbnail((50 * scale, 70 * scale), Image.Resampling.LANCZOS)
+            canvas.alpha_composite(u_img, ((width - u_img.width) // 2, 252 * scale))
 
         # 7. Akıllı Oyuncu Yerleşimi (Heads at y=324)
         players_data = [
-            {"path": data.get("player_1_path"), "center_x": 40, "target_y": 324},
-            {"path": data.get("player_2_path"), "center_x": 80, "target_y": 340}
+            {"path": data.get("player_1_path"), "center_x": 40 * scale, "target_y": 324 * scale},
+            {"path": data.get("player_2_path"), "center_x": 80 * scale, "target_y": 340 * scale}
         ]
         for p in players_data:
             if p["path"] and os.path.exists(p["path"]):
                 p_img = Image.open(p["path"]).convert("RGBA")
-                self.smart_position_player(canvas, p_img, p["center_x"], p["target_y"])
+                self.smart_position_player(canvas, p_img, p["center_x"], p["target_y"], scale)
 
         # 8. Hemen Oyna - y=492
         ho_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/hemen_oyna.png"
         if os.path.exists(ho_path):
             ho_img = Image.open(ho_path).convert("RGBA")
-            ho_img.thumbnail((104, 33), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(ho_img, ((width - ho_img.width) // 2, 492))
+            ho_img.thumbnail((104 * scale, 33 * scale), Image.Resampling.LANCZOS)
+            canvas.alpha_composite(ho_img, ((width - ho_img.width) // 2, 492 * scale))
 
         # 9. Nesine Branding Footer - y=540
-        draw.rectangle([0, 540, 120, 600], fill=(252, 215, 0))
+        draw.rectangle([0, 540 * scale, width, 600 * scale], fill=(252, 215, 0))
         n_logo_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/nesine_logo.png"
         if os.path.exists(n_logo_path):
             n_img = Image.open(n_logo_path).convert("RGBA")
-            n_img.thumbnail((100, 50), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(n_img, ((width - n_img.width) // 2, 540 + (60 - n_img.height) // 2))
+            n_img.thumbnail((100 * scale, 50 * scale), Image.Resampling.LANCZOS)
+            canvas.alpha_composite(n_img, ((width - n_img.width) // 2, int(540 * scale + (60 * scale - n_img.height) // 2)))
 
-        # 10. Save Output
+        # 10. Post-Processing: Downsample & Sharpen
+        final_canvas = canvas.resize((sw, sh), Image.Resampling.LANCZOS)
+        final_canvas = final_canvas.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+
+        # 11. Save Output
         out_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "output", "banner_uefa_120_600.png")
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        canvas.save(out_path)
+        final_canvas.save(out_path)
         return out_path
 
-    def smart_position_player(self, canvas, img, center_x, target_y):
+    def smart_position_player(self, canvas, img, center_x, target_y, scale):
         """Dikey banner için oyuncu yerleşimi (Daha küçük ölçekli)."""
         alpha = img.split()[3]
         bbox = alpha.getbbox()
         if not bbox: return
         
         current_height = bbox[3] - bbox[1]
-        target_render_height = 250
-        scale = target_render_height / current_height
+        target_render_height = 250 * scale
+        scaling_factor = target_render_height / current_height
         
-        new_w = int(img.width * scale)
-        new_h = int(img.height * scale)
+        new_w = int(img.width * scaling_factor)
+        new_h = int(img.height * scaling_factor)
         img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
         
         new_alpha = img.split()[3]
@@ -153,7 +161,7 @@ class UEFA120_600(BaseLayout):
         
         # Restoring previous soft player halo (Lower intensity)
         self.draw_mask_glow(canvas, img, (center_x, target_y + (new_h/2) - (new_bbox[1])), 
-                            color=(6, 191, 80, 200), dilation=6, blur=18, intensity=1.4)
+                            color=(6, 191, 80, 200), dilation=6 * scale, blur=18 * scale, intensity=1.4)
         
         render_x = center_x - (new_w // 2)
         render_y = target_y - new_bbox[1]

@@ -28,10 +28,9 @@ class Ziraat1200(ZiraatBase):
             canvas.alpha_composite(z_img, (lx, ly))
 
         # 3. Player Blocks (X=28 and X=870)
-        # Left: (28, 25, 303, 409), Logo: (137, 367, 100, 119)
-        # Right: (870, 26, 303, 406), Logo: (956, 367, 118, 118)
-        self.draw_player_block(canvas, data, 1, (28, 25, 303, 409), (137, 367, 100, 119))
-        self.draw_player_block(canvas, data, 2, (870, 26, 303, 406), (956, 367, 118, 118))
+        # Left: (28, 25, 303, 409), Logo: 1.5x size
+        self.draw_player_block(canvas, data, 1, (28, 25, 303, 409), (112, 337, 150, 178))
+        self.draw_player_block(canvas, data, 2, (870, 26, 303, 406), (926, 337, 177, 177))
 
         # 4. Team Names (364, 196, 472, 113)
         self.draw_match_typography(canvas, data, (364, 196, 472, 113))
