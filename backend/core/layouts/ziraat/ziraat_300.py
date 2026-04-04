@@ -11,11 +11,27 @@ class Ziraat300(ZiraatBase):
         width, height = sw * scale, sh * scale
         rgb_frames = []
         
-        # Post-Processing: Downsample & Sharpen
-        def post_process(img):
+        # Post-Processing: Downsample & Sharpen + Layer Branding at 1x
+        def post_process(img, scene_id):
+            # 1. Resize layout to final 1x
             img = img.resize((sw, sh), Image.Resampling.LANCZOS)
             from PIL import ImageFilter
-            return img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+            img = img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=50, threshold=3))
+            
+            # 2. Add Branding at 1x scale for maximum sharpness
+            # Nesine Area (0, 0, 66, 50) and Hemen Oyna (228, 10, 62, 30)
+            self.draw_nesine_area_tiny(img, (0, 0, 66, 50), (228, 10, 62, 30), 1)
+
+            if scene_id == 1:
+                # Ziraat Logo (centered in the remaining middle space [66, 228])
+                z_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ztk_yatay_logo.png")
+                if os.path.exists(z_path):
+                    z_img = Image.open(z_path).convert("RGBA")
+                    z_img.thumbnail((120, 35), Image.Resampling.LANCZOS)
+                    cx = 66 + (228 - 66 - z_img.width)//2
+                    img.alpha_composite(z_img, (int(cx), (sh - z_img.height)//2))
+                
+            return img.convert("RGB")
 
         # Scenes Logic
         for scene_id in [1, 2, 3]:
@@ -34,23 +50,15 @@ class Ziraat300(ZiraatBase):
             elif scene_id == 3:
                 self.draw_scene_3(frame, data, scale)
             
-            # Consistent Branding across all frames
-            self.draw_nesine_area_tiny(frame, (0, 0, 66 * scale, 50 * scale), (228 * scale, 10 * scale, 62 * scale, 30 * scale), scale)
-            
-            rgb_frames.append(post_process(frame).convert("RGB"))
+            rgb_frames.append(post_process(frame, scene_id))
 
         # Save GIF
         output_path = self.save_gif_standard(rgb_frames, "banner_300x50.gif", durations=[2000, 3500, 4000])
         return output_path
 
     def draw_scene_1(self, frame, data, scale):
-        """Ziraat Horizontal Logo (Centered in remaining space)."""
-        z_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ztk_yatay_logo.png")
-        if os.path.exists(z_path):
-            z_img = Image.open(z_path).convert("RGBA")
-            z_img.thumbnail((120 * scale, 35 * scale), Image.Resampling.LANCZOS)
-            cx = 66 * scale + (230 * scale - 66 * scale - z_img.width)//2
-            frame.alpha_composite(z_img, (int(cx), (frame.height - z_img.height)//2))
+        """Layout only (Branding moved to post_process)."""
+        pass
 
     def draw_scene_2(self, frame, data, scale):
         """Micro Side-by-side Players and Logos."""
@@ -113,7 +121,8 @@ class Ziraat300(ZiraatBase):
         draw = ImageDraw.Draw(frame)
         
         # Yellow Box
-        draw.rectangle([bx, by, bx+bw, by+bh], fill=(252, 215, 0, 255))
+        # Updated to #fbc600 for brand consistency
+        draw.rectangle([bx, by, bx+bw, by+bh], fill=(251, 198, 0, 255))
         n_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "nesine_logo.png")
         if os.path.exists(n_logo_path):
             n_img = Image.open(n_logo_path).convert("RGBA")

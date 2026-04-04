@@ -12,11 +12,37 @@ class Ziraat320(ZiraatBase):
         rgb_frames = []
         scenes = ["320x100_1.json", "320x100_2.json", "320x100_3.json"]
         
-        # Post-Processing: Downsample & Sharpen
-        def post_process(img):
+        # Post-Processing: Downsample & Sharpen + Layer Branding at 1x
+        def post_process(img, scene_id):
+            # 1. Resize layout to final 1x
             img = img.resize((sw, sh), Image.Resampling.LANCZOS)
             from PIL import ImageFilter
-            return img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+            img = img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=50, threshold=3))
+            
+            # 2. Add Branding at 1x scale for maximum sharpness
+            if scene_id == 1:
+                # Ziraat Logo (84, 8, 150, 58)
+                # Ziraat logo in 320x100 is ztk_yatay_logo.png
+                z_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ztk_yatay_logo.png")
+                if os.path.exists(z_path):
+                    z_img = Image.open(z_path).convert("RGBA").resize((150, 58), Image.Resampling.LANCZOS)
+                    img.alpha_composite(z_img, (84, 8))
+                # Nesine Area (129, 68, 60, 42)
+                self.draw_nesine_area_gt(img, (129, 68, 60, 42), (137, 72, 45, 23), 1)
+
+            elif scene_id == 2:
+                # Nesine (95, 68, 60, 42)
+                self.draw_nesine_area_gt(img, (95, 68, 60, 42), (103, 72, 45, 23), 1)
+                # Hemen Oyna (163, 70, 62, 20)
+                self.draw_hemen_oyna_badge(img, (163, 70, 62, 20), 1)
+
+            elif scene_id == 3:
+                # Nesine (110, 68, 60, 42)
+                self.draw_nesine_area_gt(img, (110, 68, 60, 42), (118, 72, 45, 23), 1)
+                # Hemen Oyna (175, 70, 62, 20)
+                self.draw_hemen_oyna_badge(img, (175, 70, 62, 20), 1)
+                
+            return img.convert("RGB")
 
         for scene_idx, scene_file in enumerate(scenes):
             scene_id = scene_idx + 1
@@ -35,34 +61,23 @@ class Ziraat320(ZiraatBase):
             elif scene_id == 3:
                 self.draw_scene_3(frame, data, scale)
             
-            # Persistent Branding (Scene 1 only - centered)
-            if scene_id == 1:
-                self.draw_nesine_area_gt(frame, (129 * scale, 68 * scale, 60 * scale, 42 * scale), (137 * scale, 72 * scale, 45 * scale, 23 * scale), scale)
-            
-            rgb_frames.append(post_process(frame).convert("RGB"))
+            rgb_frames.append(post_process(frame, scene_id))
 
         # GIF Generation
         output_path = self.save_gif_optimized(rgb_frames, "banner_320x100.gif", durations=[2000, 3500, 4000])
         return output_path
 
     def draw_scene_1(self, frame, data, scale):
-        """Scene 1: Ziraat Logo only (No Hemen Oyna)."""
-        z_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ztk_yatay_logo.png")
-        if os.path.exists(z_path):
-            z_img = Image.open(z_path).convert("RGBA")
-            z_img = z_img.resize((150 * scale, 58 * scale), Image.Resampling.LANCZOS)
-            frame.alpha_composite(z_img, (84 * scale, 8 * scale))
+        """Scene 1: Layout only (Branding moved to post_process)."""
+        pass
 
     def draw_scene_2(self, frame, data, scale):
-        """Scene 2: Players with Logos and Side-by-Side Branding."""
+        """Scene 2: Players with Logos (Branding moved to post_process)."""
         self.draw_player_with_logo(frame, data, 1, (9 * scale, 3 * scale, 64 * scale, 87 * scale), (68 * scale, 24 * scale, 55 * scale, 55 * scale), scale)
         self.draw_player_with_logo(frame, data, 2, (243 * scale, 3 * scale, 64 * scale, 87 * scale), (200 * scale, 24 * scale, 55 * scale, 55 * scale), scale)
-        
-        self.draw_nesine_area_gt(frame, (95 * scale, 68 * scale, 60 * scale, 42 * scale), (103 * scale, 72 * scale, 45 * scale, 23 * scale), scale)
-        self.draw_hemen_oyna_badge(frame, (163 * scale, 70 * scale, 62 * scale, 20 * scale), scale)
 
     def draw_scene_3(self, frame, data, scale):
-        """Scene 3: Refined 2x2 Grid with Side-by-Side Branding."""
+        """Scene 3: Refined 2x2 Grid (Branding moved to post_process)."""
         draw = ImageDraw.Draw(frame)
         t1, t2 = data.get("team_1", "TEAM 1").upper(), data.get("team_2", "TEAM 2").upper()
         hour, day = data.get("hour", "20:30"), data.get("day", "PAZARTESİ").upper()
@@ -89,10 +104,6 @@ class Ziraat320(ZiraatBase):
         f_day = get_font_scaled(day, 14, 70, f_saira)
         draw.text((245 * scale, 12 * scale), hour, font=f_hour, fill="black")
         draw.text((245 * scale, 42 * scale), day, font=f_day, fill="#06BF50")
-
-        # Refined Side-by-Side Branding
-        self.draw_nesine_area_gt(frame, (110 * scale, 68 * scale, 60 * scale, 42 * scale), (118 * scale, 72 * scale, 45 * scale, 23 * scale), scale)
-        self.draw_hemen_oyna_badge(frame, (175 * scale, 70 * scale, 62 * scale, 20 * scale), scale)
 
     def draw_player_with_logo(self, frame, data, index, p_bounds, l_bounds, scale):
         px, py, pw, ph = p_bounds

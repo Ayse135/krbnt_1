@@ -152,11 +152,17 @@ class Ziraat1200(ZiraatBase):
     def draw_nesine_area(self, canvas, bounds):
         bx, by, bw, bh = bounds
         draw = ImageDraw.Draw(canvas)
-        # Updated to #fbc600 per user request
+        # Updated to #fbc600 and exact PSD (480, 526, 240, 103)
         draw.rectangle([bx, by, bx+bw, by+bh], fill=(251, 198, 0, 255))
-        # High-res Logo
+        
         n_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "nesine_logo.png")
         if os.path.exists(n_logo_path):
             n_img = Image.open(n_logo_path).convert("RGBA")
-            n_img.thumbnail((157, 76), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(n_img, (bx + (bw-n_img.width)//2, by + (bh-n_img.height)//2))
+            # Exact PSD size (157, 76)
+            n_img = n_img.resize((157, 76), Image.Resampling.LANCZOS)
+            # Apply sharpening to prevent blur in smaller formats / compression
+            from PIL import ImageFilter
+            n_img = n_img.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+            
+            # Exact PSD position (522, 539)
+            canvas.alpha_composite(n_img, (522, 539))

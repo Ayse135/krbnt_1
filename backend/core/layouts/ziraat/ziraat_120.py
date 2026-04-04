@@ -19,37 +19,40 @@ class Ziraat120(ZiraatBase):
         else:
             canvas.paste((240, 240, 240, 255), [0, 0, width, height])
 
-        # Ziraat Vertical Logo for vertical banner
+        # Asset Paths
         z_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "ziraat_logo.png")
+        ho_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/backend/hemen_oyna_320x100.png"
 
-        if os.path.exists(z_logo_path):
-            z_img = Image.open(z_logo_path).convert("RGBA")
-            # Proportional scale to fit roughly 100px width
-            z_img.thumbnail((100 * scale, 100 * scale), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(z_img, ((width - z_img.width)//2, 28 * scale))
-
-        # 3. Side-by-Side Players
+        # 3. Side-by-Side Players (Stay at 2x)
         self.draw_player_block_vertical(canvas, data, 1, (2 * scale, 163 * scale, 57 * scale, 77 * scale), (13 * scale, 229 * scale, 36 * scale, 42 * scale), scale)
         self.draw_player_block_vertical(canvas, data, 2, (61 * scale, 163 * scale, 57 * scale, 77 * scale), (69 * scale, 229 * scale, 43 * scale, 43 * scale), scale)
 
-        # 4. Vertical Match Info Stack
+        # 4. Vertical Match Info Stack (Stay at 2x for smooth typography)
         self.draw_match_typography_vertical(canvas, data, (6 * scale, 309 * scale, 109 * scale, 100 * scale), scale)
 
-        # 5. Hemen Oyna Button (19, 460, 83, 25)
-        ho_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/backend/hemen_oyna_320x100.png"
-        if os.path.exists(ho_path):
-            ho_img = Image.open(ho_path).convert("RGBA").resize((83 * scale, 25 * scale), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(ho_img, (19 * scale, 460 * scale))
-
-        # 6. Nesine Bottom Area
-        self.draw_nesine_area_vertical(canvas, (-5 * scale, 542 * scale, 133 * scale, 70 * scale), (22 * scale, 549 * scale, 78 * scale, 38 * scale), scale)
-
-        # 7. Post-Processing: Downsample & Sharpen
+        # 5. Post-Processing: Downsample First
         final_canvas = canvas.resize((sw, sh), Image.Resampling.LANCZOS)
         from PIL import ImageFilter
-        final_canvas = final_canvas.filter(ImageFilter.UnsharpMask(radius=1.0, percent=150, threshold=3))
+        final_canvas = final_canvas.filter(ImageFilter.UnsharpMask(radius=1.0, percent=50, threshold=3))
+        
+        # 6. POST-DOWNSAMPLE BRANDING (1x scale for maximum sharpness)
+        # These are now only resized ONCE to their final display size
+        
+        # A. Ziraat Logo (41, 28, 41, 54 at 1x)
+        if os.path.exists(z_logo_path):
+            z_img = Image.open(z_logo_path).convert("RGBA")
+            z_img = z_img.resize((41, 54), Image.Resampling.LANCZOS)
+            final_canvas.alpha_composite(z_img, (41, 28))
 
-        # 8. Save Output
+        # B. Hemen Oyna Button (19, 460, 83, 25 at 1x)
+        if os.path.exists(ho_path):
+            ho_img = Image.open(ho_path).convert("RGBA").resize((83, 25), Image.Resampling.LANCZOS)
+            final_canvas.alpha_composite(ho_img, (19, 460))
+
+        # C. Nesine Bottom Area (Bounds are now 1x: -5, 542, 133, 70)
+        self.draw_nesine_area_vertical(final_canvas, (-5, 542, 133, 70), (22, 549, 78, 38), 1)
+
+        # 7. Save Output
         out_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "output", "banner_120x600.png")
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         final_canvas.save(out_path)
@@ -95,42 +98,65 @@ class Ziraat120(ZiraatBase):
             t1, t2 = data.get("team_1", "TEAM 1").upper(), data.get("team_2", "TEAM 2").upper()
             hour, day = data.get("hour", "20:30"), data.get("day", "PAZARTESİ").upper()
             
-            # Helper for auto-scaling font
-            def get_scaling_font(text, base_size, max_w):
+            f_reg = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/ziraat/MonumentExtended-Regular.otf"
+            f_bold = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/ziraat/MonumentExtended-Ultrabold.otf"
+
+            # Helper for auto-scaling team names
+            def get_scaling_font(text, base_size, max_w, font_path):
                 s = base_size
-                f = ImageFont.truetype(self.font_bold, int(s * scale))
+                f = ImageFont.truetype(font_path, int(s * scale))
                 while draw.textlength(text, font=f) > max_w and s > 12:
                     s -= 1
-                    f = ImageFont.truetype(self.font_bold, int(s * scale))
+                    f = ImageFont.truetype(font_path, int(s * scale))
                 return f
 
-            f1 = get_scaling_font(t1, 20, bw)
-            f2 = get_scaling_font(t2, 20, bw)
+            f_team1 = get_scaling_font(t1, 16, bw, f_bold)
+            f_team2 = get_scaling_font(t2, 16, bw, f_bold)
             
-            # Saira Style info for consistency
-            f_saira = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
-            font_info = ImageFont.truetype(f_saira, 16 * scale)
+            # 1. Hour (Master Width)
+            # PSD says 24px
+            f_hour = ImageFont.truetype(f_reg, 24 * scale)
+            hw = draw.textlength(hour, font=f_hour)
+            
+            # 2. Day (Match width of hour)
+            # Find best font size starting from 11.5px
+            ds = 11.5
+            f_day = ImageFont.truetype(f_reg, int(ds * scale))
+            cur_w = draw.textlength(day, font=f_day)
+            
+            # Binary-like search or iterative adjustment
+            if cur_w > hw:
+                while draw.textlength(day, font=f_day) > hw and ds > 4:
+                    ds -= 0.5
+                    f_day = ImageFont.truetype(f_reg, int(ds * scale))
+            else:
+                while draw.textlength(day, font=f_day) < hw and ds < 24:
+                    ds += 0.5
+                    f_day = ImageFont.truetype(f_reg, int(ds * scale))
             
             # Team 1
-            tw1 = draw.textlength(t1, font=f1)
-            draw.text((bx + (bw - tw1)//2, by), t1, font=f1, fill="black")
+            # Team 1
+            tw1 = draw.textlength(t1, font=f_team1)
+            draw.text((bx + (bw - tw1)//2, by), t1, font=f_team1, fill="black")
             # Team 2
-            tw2 = draw.textlength(t2, font=f2)
-            draw.text((bx + (bw - tw2)//2, by + 30 * scale), t2, font=f2, fill="black")
+            tw2 = draw.textlength(t2, font=f_team2)
+            draw.text((bx + (bw - tw2)//2, by + 24 * scale), t2, font=f_team2, fill="black")
             
-            # Info (Y=372 from plan)
+            # Date Area (Y=372 from plan)
             iy = 372 * scale
-            tw_h = draw.textlength(hour, font=font_info)
-            draw.text((bx + (bw - tw_h)//2, iy), hour, font=font_info, fill="black")
-            tw_d = draw.textlength(day, font=font_info)
-            draw.text((bx + (bw - tw_d)//2, iy + 20 * scale), day, font=font_info, fill="#06BF50")
+            # Draw Hour
+            draw.text((bx + (bw - hw)//2, iy), hour, font=f_hour, fill="black")
+            # Draw Day
+            dw = draw.textlength(day, font=f_day)
+            draw.text((bx + (bw - dw)//2, iy + 25 * scale), day, font=f_day, fill="black")
         except: pass
 
     def draw_nesine_area_vertical(self, canvas, box_bounds, logo_bounds, scale):
         bx, by, bw, bh = box_bounds
         lx, ly, lw, lh = logo_bounds
         draw = ImageDraw.Draw(canvas)
-        draw.rectangle([bx, by, bx+bw, by+bh], fill=(252, 215, 0, 255))
+        # Updated to #fbc600 to match the master layout
+        draw.rectangle([bx, by, bx+bw, by+bh], fill=(251, 198, 0, 255))
         
         n_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "nesine_logo.png")
         if os.path.exists(n_logo_path):
