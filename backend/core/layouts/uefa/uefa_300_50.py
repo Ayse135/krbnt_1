@@ -1,5 +1,5 @@
 import os
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from ..base import BaseLayout
 
 class UEFA300_50(BaseLayout):
@@ -95,9 +95,11 @@ class UEFA300_50(BaseLayout):
             line1 = " ".join(words[:mid])
             line2 = " ".join(words[mid:])
             
-            # Center title in the right-ish area
-            draw.text((185 * scale, 14 * scale), line1, font=font_title, fill="white", anchor="mm", align="center")
-            draw.text((185 * scale, 36 * scale), line2, font=font_title, fill="white", anchor="mm", align="center")
+            # Center title in the right-ish area or overrides
+            tx = self.overrides.get("title_x", 185) * scale
+            ty = self.overrides.get("title_y", 25) * scale
+            draw.text((tx, ty - 11 * scale), line1, font=font_title, fill="white", anchor="mm", align="center")
+            draw.text((tx, ty + 11 * scale), line2, font=font_title, fill="white", anchor="mm", align="center")
             
         return canvas
 
@@ -106,7 +108,6 @@ class UEFA300_50(BaseLayout):
         canvas = self.get_base_canvas(w, h)
         # Branding is now handled in post_process (1x scale)
         
-        from PIL import ImageDraw, ImageFont
         draw = ImageDraw.Draw(canvas)
         f_saira = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
         
@@ -139,6 +140,11 @@ class UEFA300_50(BaseLayout):
     def render_scene_3(self, data, w, h, scale):
         """Scene 3: Players + Day/Hour + Branding."""
         canvas = self.get_base_canvas(w, h)
+        draw = ImageDraw.Draw(canvas)
+        f_saira = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
+        
+        day = data.get('day', '').capitalize()
+        hour = data.get('hour', '')
         
         # 1. Players
         p1_path = data.get('player_1_path')
@@ -147,25 +153,29 @@ class UEFA300_50(BaseLayout):
         
         if p1_path and os.path.exists(p1_path):
             p1 = Image.open(p1_path).convert("RGBA")
-            p1.thumbnail((105 * scale, 105 * scale), Image.Resampling.LANCZOS)
-            self.draw_mask_glow(canvas, p1, (125 * scale, 4 * scale + p1.height//2), color=glow_color, dilation=1 * scale, blur=1 * scale)
-            canvas.alpha_composite(p1, (int(125 * scale - p1.width//2), int(4 * scale)))
+            p1_scale = self.overrides.get("player_1_scale", self.overrides.get("player_scale", 1.0))
+            p1.thumbnail((int(105 * scale * p1_scale), int(105 * scale * p1_scale)), Image.Resampling.LANCZOS)
+            p1_y = self.overrides.get("player_1_y", 4) * scale
+            self.draw_mask_glow(canvas, p1, (125 * scale, p1_y + p1.height//2), color=glow_color, dilation=1 * scale, blur=1 * scale)
+            canvas.alpha_composite(p1, (int(125 * scale - p1.width//2), int(p1_y)))
             
         if p2_path and os.path.exists(p2_path):
             p2 = Image.open(p2_path).convert("RGBA")
-            p2.thumbnail((95 * scale, 95 * scale), Image.Resampling.LANCZOS)
-            self.draw_mask_glow(canvas, p2, (208 * scale, 4 * scale + p2.height//2), color=glow_color, dilation=1 * scale, blur=1 * scale)
-            canvas.alpha_composite(p2, (int(208 * scale - p2.width//2), int(4 * scale)))
+            p2_scale = self.overrides.get("player_2_scale", self.overrides.get("player_scale", 1.0))
+            p2.thumbnail((int(95 * scale * p2_scale), int(95 * scale * p2_scale)), Image.Resampling.LANCZOS)
+            p2_y = self.overrides.get("player_2_y", 4) * scale
+            self.draw_mask_glow(canvas, p2, (208 * scale, p2_y + p2.height//2), color=glow_color, dilation=1 * scale, blur=1 * scale)
+            canvas.alpha_composite(p2, (int(208 * scale - p2.width//2), int(p2_y)))
         
-        # 3. Match Info
-        from PIL import ImageDraw, ImageFont
-        draw = ImageDraw.Draw(canvas)
-        f_saira = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
-        day = data.get('day', '').capitalize()
-        hour = data.get('hour', '')
-        font_info = ImageFont.truetype(f_saira, 17 * scale)
+        # 3. Match Info: Time (17px) Day (17px) or overrides
+        fs_info = self.overrides.get("match_info_fs", 17)
+        font_info = ImageFont.truetype(f_saira, fs_info * scale)
         
-        draw.text((168 * scale, 15 * scale), day, font=font_info, fill="#06BF50", anchor="mm")
-        draw.text((168 * scale, 35 * scale), hour, font=font_info, fill="white", anchor="mm")
+        info_x = self.overrides.get("match_info_x", 168) * scale
+        day_y = self.overrides.get("day_y", 15) * scale
+        hour_y = self.overrides.get("hour_y", 35) * scale
+        
+        draw.text((info_x, day_y), day, font=font_info, fill="#06BF50", anchor="mm")
+        draw.text((info_x, hour_y), hour, font=font_info, fill="white", anchor="mm")
             
         return canvas

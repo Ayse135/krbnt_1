@@ -26,7 +26,8 @@ class Ziraat320(ZiraatBase):
                 z_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ztk_yatay_logo.png")
                 if os.path.exists(z_path):
                     z_img = Image.open(z_path).convert("RGBA").resize((150, 58), Image.Resampling.LANCZOS)
-                    img.alpha_composite(z_img, (84, 8))
+                    z_y = self.overrides.get("ziraat_logo_y", 8)
+                    img.alpha_composite(z_img, (84, z_y))
                 # Nesine Area (129, 68, 60, 42)
                 self.draw_nesine_area_gt(img, (129, 68, 60, 42), (137, 72, 45, 23), 1)
 
@@ -91,7 +92,7 @@ class Ziraat320(ZiraatBase):
         
         # Dynamic Scaling Helper for teams
         def get_font_scaled(text, base_size, max_w, font_path):
-            s = base_size
+            s = self.overrides.get("team_name_fs", base_size)
             f = ImageFont.truetype(font_path, int(s * scale))
             while draw.textlength(text, font=f) > max_w * scale and s > 12:
                 s -= 1
@@ -110,8 +111,14 @@ class Ziraat320(ZiraatBase):
             f_team = ImageFont.truetype(f_bold, int(fs * scale))
         
         # Draw both with exact same width (target_w) using letter spacing
-        self.draw_text_with_spacing(draw, t1, (13 * scale, 20 * scale), f_team, fill="black", target_width=target_w)
-        self.draw_text_with_spacing(draw, t2, (13 * scale, 42 * scale), f_team, fill="black", target_width=target_w)
+        ty_1 = self.overrides.get("title_y", self.overrides.get("team_1_y", 20)) * scale
+        ty_2 = self.overrides.get("title_y", self.overrides.get("team_2_y", 42)) * scale
+        # If title_y is used, we need to shift the second team relative to it
+        if "title_y" in self.overrides:
+             ty_2 = ty_1 + (fs + 5) * scale
+
+        self.draw_text_with_spacing(draw, t1, (13 * scale, ty_1), f_team, fill="black", target_width=target_w)
+        self.draw_text_with_spacing(draw, t2, (13 * scale, ty_2), f_team, fill="black", target_width=target_w)
         
         # Column 2 (Right Side): Match Info
         # 1. Hour (Master Width) - 25px per PSD
@@ -134,7 +141,7 @@ class Ziraat320(ZiraatBase):
 
         # Position (X=220 approx for right-aligned block at 320 width)
         tx = 220 * scale
-        ty = 25 * scale
+        ty = self.overrides.get("match_info_y", 25) * scale
         draw.text((tx, ty), hour, font=f_hour, fill="black")
         # Center Day under Hour width
         dw = draw.textlength(day, font=f_day)
@@ -153,14 +160,20 @@ class Ziraat320(ZiraatBase):
         if p_path and os.path.exists(p_path):
             # Pill Mask Logic
             ps_w, ps_h = int(pw-4 * scale), int(ph-4 * scale)
-            p_img = ImageOps.fit(Image.open(p_path).convert("RGBA"), (ps_w, ps_h), Image.Resampling.LANCZOS, centering=(0.5, 0.0))
-            p_mask = self.create_player_mask((ps_w, ps_h), radii=(max(30 * scale, ph//2), 10 * scale, 10 * scale, 10 * scale))
-            p_bg = Image.new("RGBA", (ps_w, ps_h), t_colors["p"])
+            p_scale = self.overrides.get(f"player_{index}_scale", self.overrides.get("player_scale", 1.0))
+            target_size = (int(ps_w * p_scale), int(ps_h * p_scale))
             
-            p_final = Image.new("RGBA", (ps_w, ps_h), (0,0,0,0))
+            p_img = ImageOps.fit(Image.open(p_path).convert("RGBA"), target_size, Image.Resampling.LANCZOS, centering=(0.5, 0.0))
+            p_mask = self.create_player_mask(target_size, radii=(max(30 * scale, ph//2), 10 * scale, 10 * scale, 10 * scale))
+            p_bg = Image.new("RGBA", target_size, t_colors["p"])
+            
+            p_final = Image.new("RGBA", target_size, (0,0,0,0))
             p_final.paste(p_bg, (0,0), p_mask)
             p_final.paste(p_img, (0,0), p_mask)
-            frame.alpha_composite(p_final, (int(px+2 * scale), int(py+2 * scale)))
+            
+            px_final = int(px+2 * scale - (target_size[0]-ps_w)//2)
+            py_final = self.overrides.get("player_1_y" if index==1 else "player_2_y", py//scale) * scale
+            frame.alpha_composite(p_final, (px_final, int(py_final)))
 
         # Logo Parity
         l_path = data.get(f"logo_{index}_path")

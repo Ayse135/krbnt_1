@@ -24,11 +24,14 @@ class Ziraat120(ZiraatBase):
         ho_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/backend/hemen_oyna_320x100.png"
 
         # 3. Side-by-Side Players (Stay at 2x)
-        self.draw_player_block_vertical(canvas, data, 1, (2 * scale, 163 * scale, 57 * scale, 77 * scale), (13 * scale, 229 * scale, 36 * scale, 42 * scale), scale)
-        self.draw_player_block_vertical(canvas, data, 2, (61 * scale, 163 * scale, 57 * scale, 77 * scale), (69 * scale, 229 * scale, 43 * scale, 43 * scale), scale)
+        p1_y = self.overrides.get("player_1_y", 163) * scale
+        p2_y = self.overrides.get("player_2_y", 163) * scale
+        self.draw_player_block_vertical(canvas, data, 1, (2 * scale, p1_y, 57 * scale, 77 * scale), (13 * scale, p1_y + 66 * scale, 36 * scale, 42 * scale), scale)
+        self.draw_player_block_vertical(canvas, data, 2, (61 * scale, p2_y, 57 * scale, 77 * scale), (69 * scale, p2_y + 66 * scale, 43 * scale, 43 * scale), scale)
 
         # 4. Vertical Match Info Stack (Stay at 2x for smooth typography)
-        self.draw_match_typography_vertical(canvas, data, (6 * scale, 309 * scale, 109 * scale, 100 * scale), scale)
+        match_y = self.overrides.get("match_info_y", 309) * scale
+        self.draw_match_typography_vertical(canvas, data, (6 * scale, match_y, 109 * scale, 100 * scale), scale)
 
         # 5. Post-Processing: Downsample First
         final_canvas = canvas.resize((sw, sh), Image.Resampling.LANCZOS)
@@ -42,12 +45,14 @@ class Ziraat120(ZiraatBase):
         if os.path.exists(z_logo_path):
             z_img = Image.open(z_logo_path).convert("RGBA")
             z_img = z_img.resize((41, 54), Image.Resampling.LANCZOS)
-            final_canvas.alpha_composite(z_img, (41, 28))
+            z_y = self.overrides.get("ziraat_logo_y", 28)
+            final_canvas.alpha_composite(z_img, (41, z_y))
 
         # B. Hemen Oyna Button (19, 460, 83, 25 at 1x)
         if os.path.exists(ho_path):
             ho_img = Image.open(ho_path).convert("RGBA").resize((83, 25), Image.Resampling.LANCZOS)
-            final_canvas.alpha_composite(ho_img, (19, 460))
+            ho_y = self.overrides.get("hemen_oyna_y", 460)
+            final_canvas.alpha_composite(ho_img, (19, ho_y))
 
         # C. Nesine Bottom Area (Bounds are now 1x: -5, 542, 133, 70)
         self.draw_nesine_area_vertical(final_canvas, (-5, 542, 133, 70), (22, 549, 78, 38), 1)
@@ -77,10 +82,20 @@ class Ziraat120(ZiraatBase):
         canvas.alpha_composite(pill_final, (int(lx+2 * scale), int(ly+2 * scale)))
         
         if p_path and os.path.exists(p_path):
-            p_img = ImageOps.fit(Image.open(p_path).convert("RGBA"), mask_size, Image.Resampling.LANCZOS, centering=(0.5, 0.0))
-            p_final = Image.new("RGBA", mask_size, (0, 0, 0, 0))
-            p_final.paste(p_img, (0, 0), pill_mask)
-            canvas.alpha_composite(p_final, (int(lx+2 * scale), int(ly+2 * scale)))
+            p_scale = self.overrides.get(f"player_{index}_scale", self.overrides.get("player_scale", 1.0))
+            target_size = (int(mask_size[0] * p_scale), int(mask_size[1] * p_scale))
+            
+            p_img = ImageOps.fit(Image.open(p_path).convert("RGBA"), target_size, Image.Resampling.LANCZOS, centering=(0.5, 0.0))
+            p_mask = self.create_player_mask(target_size, radii=(max(15 * scale, target_size[0]//2), 5 * scale, 5 * scale, 5 * scale))
+            p_bg = Image.new("RGBA", target_size, t_colors["p"])
+            
+            p_final = Image.new("RGBA", target_size, (0, 0, 0, 0))
+            p_final.paste(p_bg, (0, 0), p_mask)
+            p_final.paste(p_img, (0, 0), p_mask)
+            
+            px_final = int(lx+2 * scale - (target_size[0]-mask_size[0])//2)
+            py_final = int(ly+2 * scale - (target_size[1]-mask_size[1])//2)
+            canvas.alpha_composite(p_final, (px_final, py_final))
 
         # Logo Overlap
         l_path = data.get(f"logo_{index}_path")

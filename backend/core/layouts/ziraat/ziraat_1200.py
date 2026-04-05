@@ -22,15 +22,21 @@ class Ziraat1200(ZiraatBase):
         z_logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "frontend", "public", "assets", "branding", "ziraat_logo.png")
         if os.path.exists(z_logo_path):
             z_img = Image.open(z_logo_path).convert("RGBA")
-            z_img.thumbnail((150, 150), Image.Resampling.LANCZOS)
-            # Center the logo
-            lx, ly = (width - z_img.width)//2, 26
+            # Apply AI Overrides for logo scale if present
+            z_scale = self.overrides.get("ziraat_logo_scale", 1.0)
+            z_img.thumbnail((int(150 * z_scale), int(150 * z_scale)), Image.Resampling.LANCZOS)
+            
+            # Center the logo, with Y override
+            lx = (width - z_img.width)//2
+            ly = self.overrides.get("ziraat_logo_y", 26)
             canvas.alpha_composite(z_img, (lx, ly))
 
-        # 3. Player Blocks (X=28 and X=870) - Adjusted for correct height (PSD inspection + feedback)
+        # 3. Player Blocks
         # Left: (28, 55, 303, 375), Logo: (137, 367, 100, 119)
-        self.draw_player_block(canvas, data, 1, (28, 55, 303, 375), (137, 367, 100, 119))
-        self.draw_player_block(canvas, data, 2, (870, 56, 303, 372), (956, 367, 118, 118))
+        p1_y = self.overrides.get("player_1_y", 55)
+        p2_y = self.overrides.get("player_2_y", 56)
+        self.draw_player_block(canvas, data, 1, (28, p1_y, 303, 375), (137, 367, 100, 119))
+        self.draw_player_block(canvas, data, 2, (870, p2_y, 303, 372), (956, 367, 118, 118))
 
         # 4. Team Names (364, 196, 472, 113) - PSD Ground Truth
         self.draw_match_typography(canvas, data, (364, 196, 472, 113))
@@ -45,7 +51,8 @@ class Ziraat1200(ZiraatBase):
         
         if os.path.exists(ho_path):
             ho_img = Image.open(ho_path).convert("RGBA").resize((200, 63), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(ho_img, (501, 439))
+            ho_y = self.overrides.get("hemen_oyna_y", 439)
+            canvas.alpha_composite(ho_img, (501, ho_y))
 
         # 7. Nesine Bottom Area (480, 526, 240, 103)
         self.draw_nesine_area(canvas, (480, 526, 240, 103))
@@ -118,8 +125,8 @@ class Ziraat1200(ZiraatBase):
         try:
             t1, t2 = data.get("team_1", "TEAM 1").upper(), data.get("team_2", "TEAM 2").upper()
             
-            # Start at 72px
-            fs = 72
+            # Start at 72px or override
+            fs = self.overrides.get("team_name_fs", 72)
             font_team = ImageFont.truetype(self.font_bold, fs)
             
             # Shrink-to-fit logic: If either name is wider than bw, scale down fs
@@ -127,10 +134,12 @@ class Ziraat1200(ZiraatBase):
                 fs -= 2
                 font_team = ImageFont.truetype(self.font_bold, fs)
             
+            # Use title_y if provided, else use default 'by'
+            ty = self.overrides.get("title_y", by)
+            
             # Draw both with exact same width (bw)
-            # This uses letter spacing to "justify" the text to fill the width
-            self.draw_text_with_spacing(draw, t1, (bx, by), font_team, fill="black", target_width=bw)
-            self.draw_text_with_spacing(draw, t2, (bx, by + fs + 5), font_team, fill="black", target_width=bw)
+            self.draw_text_with_spacing(draw, t1, (bx, ty), font_team, fill="black", target_width=bw)
+            self.draw_text_with_spacing(draw, t2, (bx, ty + fs + 5), font_team, fill="black", target_width=bw)
             
         except: pass
 
@@ -139,14 +148,17 @@ class Ziraat1200(ZiraatBase):
         draw = ImageDraw.Draw(canvas)
         try:
             # Match Info using the same family but Regular
-            font_info = ImageFont.truetype(self.font_reg, 40)
+            fs_info = self.overrides.get("match_info_fs", 40)
+            font_info = ImageFont.truetype(self.font_reg, fs_info)
             hour, day = data.get("hour", "20:30"), data.get("day", "PAZARTESİ").upper()
             
+            info_y = self.overrides.get("match_info_y", by)
+            
             tw1 = draw.textlength(hour, font=font_info)
-            draw.text((bx + (bw - tw1)//2, by), hour, font=font_info, fill="black")
+            draw.text((bx + (bw - tw1)//2, info_y), hour, font=font_info, fill="black")
             
             tw2 = draw.textlength(day, font=font_info)
-            draw.text((bx + (bw - tw2)//2, by + 45), day, font=font_info, fill="black")
+            draw.text((bx + (bw - tw2)//2, info_y + fs_info + 5), day, font=font_info, fill="black")
         except: pass
 
     def draw_nesine_area(self, canvas, bounds):

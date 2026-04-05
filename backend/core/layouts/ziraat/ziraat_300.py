@@ -27,7 +27,8 @@ class Ziraat300(ZiraatBase):
                 z_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ztk_yatay_logo.png")
                 if os.path.exists(z_path):
                     z_img = Image.open(z_path).convert("RGBA").resize((122, 47), Image.Resampling.LANCZOS)
-                    img.alpha_composite(z_img, (88, 1))
+                    z_y = self.overrides.get("ziraat_logo_y", 1)
+                    img.alpha_composite(z_img, (88, z_y))
                 
             return img.convert("RGB")
 
@@ -87,13 +88,13 @@ class Ziraat300(ZiraatBase):
         # Column 1 (X=70): Teams (Stacked per screenshot)
         # Reduced target width to 95px to create gap before Time Info (at X=175)
         target_w = 95 * scale
-        fs = 11
+        fs = self.overrides.get("team_name_fs", 11)
         f_team = ImageFont.truetype(f_bold, int(fs * scale))
         while (draw.textlength(t1, font=f_team) > target_w or draw.textlength(t2, font=f_team) > target_w) and fs > 8:
             fs -= 1
             f_team = ImageFont.truetype(f_bold, int(fs * scale))
         
-        ty_teams = 13 * scale
+        ty_teams = self.overrides.get("title_y", self.overrides.get("team_1_y", 13)) * scale
         # Draw both with exact same width (target_w) using letter spacing
         self.draw_text_with_spacing(draw, t1, (70 * scale, ty_teams), f_team, fill="black", target_width=target_w)
         self.draw_text_with_spacing(draw, t2, (70 * scale, ty_teams + 13 * scale), f_team, fill="black", target_width=target_w)
@@ -119,7 +120,7 @@ class Ziraat300(ZiraatBase):
 
         # Position (X=175 to avoid overlap with HO and balance centered gap)
         tx = 175 * scale
-        ty = 13 * scale
+        ty = self.overrides.get("match_info_y", 13) * scale
         draw.text((tx, ty), hour, font=f_hour, fill="black")
         # Center Day under Hour
         dw = draw.textlength(day, font=f_day)
@@ -137,14 +138,21 @@ class Ziraat300(ZiraatBase):
         
         if p_path and os.path.exists(p_path):
             ps_w, ps_h = int(pw-2 * scale), int(ph-2 * scale)
-            p_img = ImageOps.fit(Image.open(p_path).convert("RGBA"), (ps_w, ps_h), Image.Resampling.LANCZOS, centering=(0.5, 0.0))
-            p_mask = self.create_player_mask((ps_w, ps_h), radii=(10 * scale, 5 * scale, 5 * scale, 5 * scale))
-            p_bg = Image.new("RGBA", (ps_w, ps_h), t_colors["p"])
+            # Support individual scaling from AI
+            p_scale = self.overrides.get(f"player_{index}_scale", self.overrides.get("player_scale", 1.0))
+            target_size = (int(ps_w * p_scale), int(ps_h * p_scale))
             
-            p_final = Image.new("RGBA", (ps_w, ps_h), (0,0,0,0))
+            p_img = ImageOps.fit(Image.open(p_path).convert("RGBA"), target_size, Image.Resampling.LANCZOS, centering=(0.5, 0.0))
+            p_mask = self.create_player_mask(target_size, radii=(10 * scale, 5 * scale, 5 * scale, 5 * scale))
+            p_bg = Image.new("RGBA", target_size, t_colors["p"])
+            
+            p_final = Image.new("RGBA", target_size, (0,0,0,0))
             p_final.paste(p_bg, (0,0), p_mask)
             p_final.paste(p_img, (0,0), p_mask)
-            frame.alpha_composite(p_final, (int(px+1 * scale), int(py+1 * scale)))
+            
+            px_final = int(px+1 * scale - (target_size[0]-ps_w)//2)
+            py_final = self.overrides.get("player_1_y" if index==1 else "player_2_y", py//scale) * scale
+            frame.alpha_composite(p_final, (px_final, int(py_final)))
 
         # Logo Parity (Equal resize)
         l_path = data.get(f"logo_{index}_path")

@@ -25,22 +25,25 @@ class UEFA1200(BaseLayout):
 
         # 3. Akıllı Oyuncu Yerleşimi (Tight Halo Glow)
         # PSD OyuncularYeni Bbox: Left (-78, 133), Right (779, 131)
+        p1_scale = self.overrides.get("player_1_scale", self.overrides.get("player_scale", 1.0))
+        p2_scale = self.overrides.get("player_2_scale", self.overrides.get("player_scale", 1.0))
+        
         players_data = [
-            {"path": data.get("player_1_path"), "center_x": 172, "target_y": 133, "side": "left"},
-            {"path": data.get("player_2_path"), "center_x": 1037, "target_y": 131, "side": "right"}
+            {"path": data.get("player_1_path"), "center_x": 172, "target_y": 133, "scale_adj": p1_scale},
+            {"path": data.get("player_2_path"), "center_x": 1037, "target_y": 131, "scale_adj": p2_scale}
         ]
 
         for p in players_data:
             if p["path"] and os.path.exists(p["path"]):
                 p_img = Image.open(p["path"]).convert("RGBA")
-                self.smart_position_player(canvas, p_img, p["center_x"], p["target_y"])
+                self.smart_position_player(canvas, p_img, p["center_x"], p["target_y"], p.get("scale_adj", 1.0))
 
         # 4. Takım Logoları (Geniş Atmosferik Işıma)
         # PSD Logolar: Left (347, 225), Right (850, 229)
-        # Not: Logo render oyuncudan SONRA, katman olarak üstte durur.
+        l_y_override = self.overrides.get("logo_y", 225)
         logos_data = [
-            {"path": data.get("logo_1_path"), "center": (347, 225), "max_size": (185, 210)},
-            {"path": data.get("logo_2_path"), "center": (850, 229), "max_size": (175, 210)}
+            {"path": data.get("logo_1_path"), "center": (347, l_y_override), "max_size": (185, 210)},
+            {"path": data.get("logo_2_path"), "center": (850, l_y_override + 4), "max_size": (175, 210)}
         ]
 
         for l in logos_data:
@@ -57,18 +60,22 @@ class UEFA1200(BaseLayout):
             f_saira_cond = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
             
             if title:
-                # Dinamik başlık çizimi (Otomatik sığdırma ve satır bölme)
-                self.draw_dynamic_title(draw, title, f_saira_cond, max_width=1000, start_y=30)
+                # Dinamik başlık çizimi
+                t_y = self.overrides.get("title_y", 30)
+                self.draw_dynamic_title(draw, title, f_saira_cond, max_width=1000, start_y=t_y)
             
-            # Day & Hour (Shifted Up: Old Y was 160/235)
+            # Day & Hour
             day_text = data.get('day', 'Pazartesi').capitalize()
             hour_text = data.get('hour', '20:30')
             
-            font_info = ImageFont.truetype(f_saira_cond, 88)
+            fs_info = self.overrides.get("match_info_fs", 88)
+            font_info = ImageFont.truetype(f_saira_cond, fs_info)
             
-            # Yeni Pozisyonlar: UEFA Logosuyla çakışmaması için yukarı alındı
-            draw.text(((width - draw.textlength(day_text, font=font_info)) // 2, 130), day_text, font=font_info, fill="#06BF50")
-            draw.text(((width - draw.textlength(hour_text, font=font_info)) // 2, 205), hour_text, font=font_info, fill="white")
+            day_y = self.overrides.get("day_y", 130)
+            hour_y = self.overrides.get("hour_y", 205)
+            
+            draw.text(((width - draw.textlength(day_text, font=font_info)) // 2, day_y), day_text, font=font_info, fill="#06BF50")
+            draw.text(((width - draw.textlength(hour_text, font=font_info)) // 2, hour_y), hour_text, font=font_info, fill="white")
         except Exception as e:
             print(f"Typo Error: {e}")
 
@@ -76,13 +83,15 @@ class UEFA1200(BaseLayout):
         if os.path.exists(u_logo_path):
             u_img = Image.open(u_logo_path).convert("RGBA")
             u_img = u_img.resize((81, 124), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(u_img, ((width - u_img.width) // 2, 323))
+            u_y = self.overrides.get("uefa_logo_y", 323)
+            canvas.alpha_composite(u_img, ((width - u_img.width) // 2, u_y))
 
         ho_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/hemen_oyna.png"
         if os.path.exists(ho_path):
             ho_img = Image.open(ho_path).convert("RGBA")
             ho_img = ho_img.resize((190, 59), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(ho_img, (506, 465))
+            ho_y = self.overrides.get("hemen_oyna_y", 465)
+            canvas.alpha_composite(ho_img, (506, ho_y))
 
         draw.rectangle([492, 536, 492 + 217, 536 + 93], fill=(252, 215, 0))
         n_logo_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/nesine_logo.png"
@@ -97,7 +106,7 @@ class UEFA1200(BaseLayout):
         canvas.save(out_path)
         return out_path
 
-    def smart_position_player(self, canvas, img, center_x, target_y):
+    def smart_position_player(self, canvas, img, center_x, target_y, scale_adj=1.0):
         """Oyuncuyu kafa/omuz hattına göre akıllıca ölçekler ve yerleştirir."""
         # 1. Kafa Analizi
         alpha = img.split()[3]
@@ -106,7 +115,7 @@ class UEFA1200(BaseLayout):
         
         # Oyuncuyu PSD standardına göre ölçekle
         current_height = bbox[3] - bbox[1]
-        target_render_height = 800 
+        target_render_height = 800 * scale_adj
         scale = target_render_height / current_height
         
         new_w = int(img.width * scale)

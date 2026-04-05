@@ -71,8 +71,13 @@ class UEFA320_100(BaseLayout):
             line2 = " ".join(words[mid:])
             
             # Nesine logosunu dengelemek için hafif sağa offsetli (170) ama daha ortalı görünüm
-            draw.text((170 * scale, h/2 - 15 * scale), line1, font=font_title, fill="white", anchor="mm", align="center")
-            draw.text((170 * scale, h/2 + 15 * scale), line2, font=font_title, fill="white", anchor="mm", align="center")
+            # apply overrides for Y and X
+            tx = self.overrides.get("title_x", 170) * scale
+            ty = self.overrides.get("title_y", h/2) 
+            spacing = 15 * scale
+            
+            draw.text((tx, ty - spacing), line1, font=font_title, fill="white", anchor="mm", align="center")
+            draw.text((tx, ty + spacing), line2, font=font_title, fill="white", anchor="mm", align="center")
             
         return canvas
 
@@ -130,15 +135,19 @@ class UEFA320_100(BaseLayout):
         
         if p1_path and os.path.exists(p1_path):
             p1 = Image.open(p1_path).convert("RGBA")
-            p1.thumbnail((140 * scale, 140 * scale), Image.Resampling.LANCZOS)
-            self.draw_mask_glow(canvas, p1, (100 * scale, 18 * scale + p1.height//2), color=(6, 191, 80, 180), dilation=5 * scale, blur=15 * scale)
-            canvas.alpha_composite(p1, (100 * scale - p1.width//2, 18 * scale))
+            p1_scale = self.overrides.get("player_1_scale", self.overrides.get("player_scale", 1.0))
+            p1.thumbnail((int(140 * scale * p1_scale), int(140 * scale * p1_scale)), Image.Resampling.LANCZOS)
+            p1_y = self.overrides.get("player_1_y", 18) * scale
+            self.draw_mask_glow(canvas, p1, (100 * scale, p1_y + p1.height//2), color=(6, 191, 80, 180), dilation=5 * scale, blur=15 * scale)
+            canvas.alpha_composite(p1, (int(100 * scale - p1.width//2), int(p1_y)))
             
         if p2_path and os.path.exists(p2_path):
             p2 = Image.open(p2_path).convert("RGBA")
-            p2.thumbnail((140 * scale, 140 * scale), Image.Resampling.LANCZOS)
-            self.draw_mask_glow(canvas, p2, (222 * scale, 15 * scale + p2.height//2), color=(6, 191, 80, 180), dilation=5 * scale, blur=15 * scale)
-            canvas.alpha_composite(p2, (222 * scale - p2.width//2, 15 * scale))
+            p2_scale = self.overrides.get("player_2_scale", self.overrides.get("player_scale", 1.0))
+            p2.thumbnail((int(140 * scale * p2_scale), int(140 * scale * p2_scale)), Image.Resampling.LANCZOS)
+            p2_y = self.overrides.get("player_2_y", 15) * scale
+            self.draw_mask_glow(canvas, p2, (222 * scale, p2_y + p2.height//2), color=(6, 191, 80, 180), dilation=5 * scale, blur=15 * scale)
+            canvas.alpha_composite(p2, (int(222 * scale - p2.width//2), int(p2_y)))
         
         # 3. Match Info (Center)
         self.draw_match_info_center(canvas, data, scale)
@@ -153,17 +162,22 @@ class UEFA320_100(BaseLayout):
         day = data.get('day', '').capitalize()
         hour = data.get('hour', '')
         
-        font_320 = ImageFont.truetype(f_saira, 18 * scale)
+        fs_info = self.overrides.get("match_info_fs", 18)
+        font_320 = ImageFont.truetype(f_saira, fs_info * scale)
+        
         # Day
-        draw.text((160 * scale, 25 * scale), day, font=font_320, fill="#06BF50", anchor="mm")
+        day_y = self.overrides.get("day_y", 25) * scale
+        draw.text((160 * scale, day_y), day, font=font_320, fill="#06BF50", anchor="mm")
         # Hour
-        draw.text((160 * scale, 48 * scale), hour, font=font_320, fill="white", anchor="mm")
+        hour_y = self.overrides.get("hour_y", 48) * scale
+        draw.text((160 * scale, hour_y), hour, font=font_320, fill="white", anchor="mm")
         
         # UEFA Logo (Bottom center)
         if os.path.exists(u_logo_path):
             u_img = Image.open(u_logo_path).convert("RGBA")
             u_img.thumbnail((30 * scale, 40 * scale), Image.Resampling.LANCZOS)
-            canvas.alpha_composite(u_img, ((canvas.width - u_img.width) // 2, 60 * scale))
+            u_y = self.overrides.get("uefa_logo_y", 60) * scale
+            canvas.alpha_composite(u_img, ((canvas.width - u_img.width) // 2, u_y))
 
     def draw_mask_glow(self, canvas, img, center, color, dilation=15, blur=30, intensity=1.5):
         margin = blur + 20

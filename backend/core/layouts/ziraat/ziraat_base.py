@@ -5,8 +5,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageOps, ImageChops
 from ..base import BaseLayout
 
 class ZiraatBase(BaseLayout):
-    def __init__(self, engine):
-        super().__init__(engine)
+    def __init__(self, engine, overrides=None):
+        super().__init__(engine, overrides)
         self.font_bold = self.fonts["ziraat_bold"]
         self.font_reg = self.fonts["ziraat_reg"]
 

@@ -48,7 +48,8 @@ async def generate_banner(
     hour: str = Form(...),
     match_title: str = Form(default="SAMSUNSPOR ÇEYREK FİNAL YOLUNDA!"),
     player_1_id: str = Form(default="1"),
-    player_2_id: str = Form(default="2")
+    player_2_id: str = Form(default="2"),
+    overrides: Optional[str] = Form(None)
 ):
     try:
         # Logo haritalama (Basit versiyon)
@@ -78,8 +79,17 @@ async def generate_banner(
             "logo_2_path": f"/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/logos/logo_{l2_id}.png"
         }
         
-        # Dispatch to the modular engine
-        generated_path = ENGINE.generate(data, size_key=size, league=league)
+        # overrides string'ini dict'e çevir
+        import json
+        overrides_dict = None
+        if overrides:
+            try:
+                overrides_dict = json.loads(overrides)
+            except Exception as e:
+                print(f"Overrides Parse Error: {e}")
+
+        # Dispatch to the modular engine with overrides
+        generated_path = ENGINE.generate(data, size_key=size, league=league, overrides=overrides_dict)
         filename = os.path.basename(generated_path)
         
         # Relative URL döndür (Host bağımsızlığı için)
@@ -90,10 +100,11 @@ async def generate_banner(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 1. Görüntüleme için Standart Statik Dosya Hizmeti
-app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
+# ⚠️ ÖNEMLI SIRALAMA:
+# app.mount() sonrasında eklenen route'lar mount tarafından gölgelenir ve çalışmaz!
+# Bu yüzden tüm route'lar mount'lardan ÖNCE tanımlanmalıdır.
 
-# 2. İndirme Butonu için Zorunlu İndirme Rotası
+# İndirme Butonu için Zorunlu İndirme Rotası (mount'lardan ÖNCE olmalı!)
 @app.get("/api/download/{filename}")
 async def download_file(filename: str):
     file_path = OUTPUT_DIR / filename
@@ -110,6 +121,9 @@ async def download_file(filename: str):
         media_type=content_type,
         headers={"Access-Control-Expose-Headers": "Content-Disposition"}
     )
+
+# Görüntüleme için Standart Statik Dosya Hizmeti (route'lardan SONRA olmalı)
+app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 
 # Frontend mount (Her zaman en sonda olmalı yoksa diğer rotaları ezer!)
 app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

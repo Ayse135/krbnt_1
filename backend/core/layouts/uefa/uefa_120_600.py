@@ -62,7 +62,7 @@ class UEFA120_600(BaseLayout):
                     base_fs -= 0.5
                     font_title = ImageFont.truetype(f_title, int(base_fs * scale))
                 
-                curr_y = 25 * scale
+                curr_y = self.overrides.get("title_y", 25) * scale
                 for line in lines[:3]:
                     w_l = draw.textlength(line, font=font_title)
                     draw.text(((width - w_l) // 2, curr_y), line, font=font_title, fill="white")
@@ -72,9 +72,10 @@ class UEFA120_600(BaseLayout):
 
         # 4. Team Logos (Side-by-Side at y=140)
         # Using the new "Power Glow" logic for high visibility
+        common_logo_y = self.overrides.get("logo_y", 140) * scale
         logos_data = [
-            {"path": data.get("logo_1_path"), "center": (35 * scale, 140 * scale), "size": (48 * scale, 58 * scale)},
-            {"path": data.get("logo_2_path"), "center": (85 * scale, 140 * scale), "size": (48 * scale, 58 * scale)}
+            {"path": data.get("logo_1_path"), "center": (35 * scale, common_logo_y), "size": (48 * scale, 58 * scale)},
+            {"path": data.get("logo_2_path"), "center": (85 * scale, common_logo_y), "size": (48 * scale, 58 * scale)}
         ]
         for l in logos_data:
             if l["path"] and os.path.exists(l["path"]):
@@ -91,8 +92,11 @@ class UEFA120_600(BaseLayout):
             font_info = ImageFont.truetype(f_saira_cond, 30 * scale)
             
             # Precisely centered in the available ~80px gap
-            draw.text((60 * scale, 195 * scale), day_text, font=font_info, fill="#06BF50", anchor="mm")
-            draw.text((60 * scale, 225 * scale), hour_text, font=font_info, fill="white", anchor="mm")
+            day_y = self.overrides.get("day_y", 195) * scale
+            hour_y = self.overrides.get("hour_y", 225) * scale
+            
+            draw.text((60 * scale, day_y), day_text, font=font_info, fill="#06BF50", anchor="mm")
+            draw.text((60 * scale, hour_y), hour_text, font=font_info, fill="white", anchor="mm")
         except Exception as e:
             print(f"Info Error: {e}")
 
@@ -100,9 +104,11 @@ class UEFA120_600(BaseLayout):
         pass
 
         # 7. Akıllı Oyuncu Yerleşimi (Heads at y=324)
+        p1_y = self.overrides.get("player_1_y", 324) * scale
+        p2_y = self.overrides.get("player_2_y", 340) * scale
         players_data = [
-            {"path": data.get("player_1_path"), "center_x": 40 * scale, "target_y": 324 * scale},
-            {"path": data.get("player_2_path"), "center_x": 80 * scale, "target_y": 340 * scale}
+            {"path": data.get("player_1_path"), "center_x": 40 * scale, "target_y": p1_y},
+            {"path": data.get("player_2_path"), "center_x": 80 * scale, "target_y": p2_y}
         ]
         for p in players_data:
             if p["path"] and os.path.exists(p["path"]):
@@ -123,14 +129,16 @@ class UEFA120_600(BaseLayout):
         if os.path.exists(u_logo_path):
             u_img = Image.open(u_logo_path).convert("RGBA")
             u_img.thumbnail((50, 70), Image.Resampling.LANCZOS)
-            final_canvas.alpha_composite(u_img, ((sw - u_img.width) // 2, 252))
+            u_y = self.overrides.get("uefa_logo_y", 252)
+            final_canvas.alpha_composite(u_img, ((sw - u_img.width) // 2, u_y))
             
         # B. Hemen Oyna (y=492)
         ho_path = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/frontend/public/assets/branding/hemen_oyna.png"
         if os.path.exists(ho_path):
             ho_img = Image.open(ho_path).convert("RGBA")
             ho_img.thumbnail((104, 33), Image.Resampling.LANCZOS)
-            final_canvas.alpha_composite(ho_img, ((sw - ho_img.width) // 2, 492))
+            ho_y = self.overrides.get("hemen_oyna_y", 492)
+            final_canvas.alpha_composite(ho_img, ((sw - ho_img.width) // 2, ho_y))
             
         # C. Nesine Footer (y=540)
         draw_1x.rectangle([0, 540, sw, 600], fill=(252, 215, 0))
