@@ -3,9 +3,10 @@ import json
 from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
 
 class BaseLayout:
-    def __init__(self, engine):
+    def __init__(self, engine, overrides=None):
         self.engine = engine
         self.fonts = engine.fonts
+        self.overrides = overrides or {}
 
     def get_team_colors(self, team_name):
         """Takım renklerini döner (Primary, Secondary)"""

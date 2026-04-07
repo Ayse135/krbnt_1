@@ -16,36 +16,36 @@ class BannerEngine:
             "archivo": "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/ArchivoBlack-Regular.ttf"
         }
 
-    def generate(self, data, size_key="1200x628", league="ZIRAAT"):
+    def generate(self, data, size_key="1200x628", league="ZIRAAT", overrides=None):
         """Dispatcher: Lig ve Boyut hiyerarşisine göre uygun Layout'u çağırır."""
         league = league.upper()
         
         if league == "ZIRAAT":
             if size_key == "1200x628":
                 from .layouts.ziraat.ziraat_1200 import Ziraat1200
-                return Ziraat1200(self).render(data)
+                return Ziraat1200(self, overrides=overrides).render(data)
             elif size_key == "320x100":
                 from .layouts.ziraat.ziraat_320 import Ziraat320
-                return Ziraat320(self).render(data)
+                return Ziraat320(self, overrides=overrides).render(data)
             elif size_key == "300x50":
                 from .layouts.ziraat.ziraat_300 import Ziraat300
-                return Ziraat300(self).render(data)
+                return Ziraat300(self, overrides=overrides).render(data)
             elif size_key == "120x600":
                 from .layouts.ziraat.ziraat_120 import Ziraat120
-                return Ziraat120(self).render(data)
+                return Ziraat120(self, overrides=overrides).render(data)
                 
         elif league == "UEFA":
             if size_key == "1200x628":
                 from .layouts.uefa.uefa_1200 import UEFA1200
-                return UEFA1200(self).render(data)
+                return UEFA1200(self, overrides=overrides).render(data)
             elif size_key == "120x600":
                 from .layouts.uefa.uefa_120_600 import UEFA120_600
-                return UEFA120_600(self).render(data)
+                return UEFA120_600(self, overrides=overrides).render(data)
             elif size_key == "320x100":
                 from .layouts.uefa.uefa_320_100 import UEFA320_100
-                return UEFA320_100(self).render(data)
+                return UEFA320_100(self, overrides=overrides).render(data)
             elif size_key == "300x50":
                 from .layouts.uefa.uefa_300_50 import UEFA300_50
-                return UEFA300_50(self).render(data)
+                return UEFA300_50(self, overrides=overrides).render(data)
             
         raise ValueError(f"Geçersiz hiyerarşi: {league} - {size_key}")

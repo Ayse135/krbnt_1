@@ -98,6 +98,9 @@ async def generate_banner(
             "imageUrl": f"/output/{filename}"
         }
     except Exception as e:
+        import traceback
+        print(f"CRITICAL ERROR in /generate-banner:")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 # ⚠️ ÖNEMLI SIRALAMA:
