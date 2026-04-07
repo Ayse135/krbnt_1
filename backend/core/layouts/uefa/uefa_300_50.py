@@ -95,11 +95,9 @@ class UEFA300_50(BaseLayout):
             line1 = " ".join(words[:mid])
             line2 = " ".join(words[mid:])
             
-            # Dynamic Position & Scale
-            mt_fs = self.overrides.get("match_title_fs", 24)
-            font_title = ImageFont.truetype(f_saira, int(mt_fs * scale))
-            tx = (self.overrides.get("match_title_x", self.overrides.get("title_x", 185)) + int(self.overrides.get("match_title_x_offset", 0))) * scale
-            ty = (self.overrides.get("match_title_y", self.overrides.get("title_y", 25)) + int(self.overrides.get("match_title_y_offset", 0))) * scale
+            # Center title in the right-ish area or overrides
+            tx = self.overrides.get("title_x", 185) * scale
+            ty = self.overrides.get("title_y", 25) * scale
             draw.text((tx, ty - 11 * scale), line1, font=font_title, fill="white", anchor="mm", align="center")
             draw.text((tx, ty + 11 * scale), line2, font=font_title, fill="white", anchor="mm", align="center")
             
@@ -127,23 +125,15 @@ class UEFA300_50(BaseLayout):
         
         if l1_path and os.path.exists(l1_path):
             l1 = Image.open(l1_path).convert("RGBA")
-            l1_scale = float(self.overrides.get("logo_1_scale", 1.0))
-            l1.thumbnail((int(40 * scale * l1_scale), int(40 * scale * l1_scale)), Image.Resampling.LANCZOS)
-            
-            l1_x = (120 + int(self.overrides.get("logo_1_x_offset", 0))) * scale
-            l1_y = (25 + int(self.overrides.get("logo_y_offset", 0))) * scale
-            self.draw_mask_glow(canvas, l1, (l1_x, l1_y), color=glow_color, dilation=1 * scale, blur=1 * scale)
-            canvas.alpha_composite(l1, (int(l1_x - l1.width//2), int(l1_y - l1.height//2)))
+            l1.thumbnail((40 * scale, 40 * scale), Image.Resampling.LANCZOS)
+            self.draw_mask_glow(canvas, l1, (120 * scale, 25 * scale), color=glow_color, dilation=1 * scale, blur=1 * scale)
+            canvas.alpha_composite(l1, (int(120 * scale - l1.width//2), int(25 * scale - l1.height//2)))
             
         if l2_path and os.path.exists(l2_path):
             l2 = Image.open(l2_path).convert("RGBA")
-            l2_scale = float(self.overrides.get("logo_2_scale", 1.0))
-            l2.thumbnail((int(40 * scale * l2_scale), int(40 * scale * l2_scale)), Image.Resampling.LANCZOS)
-            
-            l2_x = (208 + int(self.overrides.get("logo_2_x_offset", 0))) * scale
-            l2_y = (25 + int(self.overrides.get("logo_y_offset", 0))) * scale
-            self.draw_mask_glow(canvas, l2, (l2_x, l2_y), color=glow_color, dilation=1 * scale, blur=1 * scale)
-            canvas.alpha_composite(l2, (int(l2_x - l2.width//2), int(l2_y - l2.height//2)))
+            l2.thumbnail((40 * scale, 40 * scale), Image.Resampling.LANCZOS)
+            self.draw_mask_glow(canvas, l2, (208 * scale, 25 * scale), color=glow_color, dilation=1 * scale, blur=1 * scale)
+            canvas.alpha_composite(l2, (int(208 * scale - l2.width//2), int(25 * scale - l2.height//2)))
             
         return canvas
 
@@ -181,9 +171,9 @@ class UEFA300_50(BaseLayout):
         fs_info = self.overrides.get("match_info_fs", 17)
         font_info = ImageFont.truetype(f_saira, fs_info * scale)
         
-        info_x = (self.overrides.get("match_info_x", 168) + int(self.overrides.get("match_info_x_offset", 0))) * scale
-        day_y = (self.overrides.get("day_y", 15) + int(self.overrides.get("match_info_y_offset", 0))) * scale
-        hour_y = (self.overrides.get("hour_y", 35) + int(self.overrides.get("match_info_y_offset", 0))) * scale
+        info_x = self.overrides.get("match_info_x", 168) * scale
+        day_y = self.overrides.get("day_y", 15) * scale
+        hour_y = self.overrides.get("hour_y", 35) * scale
         
         draw.text((info_x, day_y), day, font=font_info, fill="#06BF50", anchor="mm")
         draw.text((info_x, hour_y), hour, font=font_info, fill="white", anchor="mm")

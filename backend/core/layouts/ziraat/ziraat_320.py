@@ -111,35 +111,37 @@ class Ziraat320(ZiraatBase):
             f_team = ImageFont.truetype(f_bold, int(fs * scale))
         
         # Draw both with exact same width (target_w) using letter spacing
-        # Dynamic Positioning
-        t_y_off = int(self.overrides.get("team_name_y_offset", 0)) * scale
-        
-        ty_1 = (self.overrides.get("team_1_y", 20) * scale) + t_y_off
-        ty_2 = (self.overrides.get("team_2_y", 42) * scale) + t_y_off
+        ty_1 = self.overrides.get("title_y", self.overrides.get("team_1_y", 20)) * scale
+        ty_2 = self.overrides.get("title_y", self.overrides.get("team_2_y", 42)) * scale
         # If title_y is used, we need to shift the second team relative to it
         if "title_y" in self.overrides:
              ty_2 = ty_1 + (fs + 5) * scale
 
-        t1_x_off = int(self.overrides.get("team_1_x_offset", 0)) * scale
-        t2_x_off = int(self.overrides.get("team_2_x_offset", 0)) * scale
+        self.draw_text_with_spacing(draw, t1, (13 * scale, ty_1), f_team, fill="black", target_width=target_w)
+        self.draw_text_with_spacing(draw, t2, (13 * scale, ty_2), f_team, fill="black", target_width=target_w)
         
-        self.draw_text_with_spacing(draw, t1, (13 * scale + t1_x_off, ty_1), f_team, fill="black", target_width=target_w)
-        self.draw_text_with_spacing(draw, t2, (13 * scale + t2_x_off, ty_2), f_team, fill="black", target_width=target_w)
-        
-        # Position and Scale Control for Info
-        info_fs = self.overrides.get("match_info_fs", 25)
-        f_hour = ImageFont.truetype(f_reg, int(info_fs * scale))
+        # Column 2 (Right Side): Match Info
+        # 1. Hour (Master Width) - 25px per PSD
+        f_hour = ImageFont.truetype(f_reg, 25 * scale)
         hw = draw.textlength(hour, font=f_hour)
         
-        # Day auto-fit logic
+        # 2. Day (Match width of hour)
         ds = 12.5
         f_day = ImageFont.truetype(f_reg, int(ds * scale))
-        while draw.textlength(day, font=f_day) > hw and ds > 4:
-            ds -= 0.5
-            f_day = ImageFont.truetype(f_reg, int(ds * scale))
+        cur_w = draw.textlength(day, font=f_day)
+        
+        if cur_w > hw:
+            while draw.textlength(day, font=f_day) > hw and ds > 4:
+                ds -= 0.5
+                f_day = ImageFont.truetype(f_reg, int(ds * scale))
+        else:
+            while draw.textlength(day, font=f_day) < hw and ds < 24:
+                ds += 0.5
+                f_day = ImageFont.truetype(f_reg, int(ds * scale))
 
-        tx = (220 + self.overrides.get("match_info_x_offset", 0)) * scale
-        ty = (self.overrides.get("match_info_y", 25) + self.overrides.get("match_info_y_offset", 0)) * scale
+        # Position (X=220 approx for right-aligned block at 320 width)
+        tx = 220 * scale
+        ty = self.overrides.get("match_info_y", 25) * scale
         draw.text((tx, ty), hour, font=f_hour, fill="black")
         # Center Day under Hour width
         dw = draw.textlength(day, font=f_day)
@@ -169,24 +171,17 @@ class Ziraat320(ZiraatBase):
             p_final.paste(p_bg, (0,0), p_mask)
             p_final.paste(p_img, (0,0), p_mask)
             
-            px_final = int(px+2 * scale - (target_size[0]-ps_w)//2) + int(self.overrides.get(f"player_{index}_x_offset", 0)) * scale
-            py_final = (self.overrides.get("player_1_y" if index==1 else "player_2_y", py//scale) + self.overrides.get(f"player_{index}_y_offset", 0)) * scale
+            px_final = int(px+2 * scale - (target_size[0]-ps_w)//2)
+            py_final = self.overrides.get("player_1_y" if index==1 else "player_2_y", py//scale) * scale
             frame.alpha_composite(p_final, (px_final, int(py_final)))
 
-        # Logo Control: Scale and Offset
+        # Logo Parity
         l_path = data.get(f"logo_{index}_path")
         if l_path and os.path.exists(l_path):
             l_img = Image.open(l_path).convert("RGBA")
-            
-            l_scale = float(self.overrides.get(f"logo_{index}_scale", 1.0))
-            lw_final, lh_final = int(lw * l_scale), int(lh * l_scale)
-            l_img.thumbnail((lw_final, lh_final), Image.Resampling.LANCZOS)
-            
-            lx_off = int(self.overrides.get(f"logo_{index}_x_offset", 0)) * scale
-            ly_off = int(self.overrides.get("logo_y_offset", 0)) * scale
-            
-            clx = lx + (lw - l_img.width)//2 + lx_off
-            cly = ly + (lh - l_img.height)//2 + ly_off
+            l_img.thumbnail((lw, lh), Image.Resampling.LANCZOS)
+            clx = lx + (lw - l_img.width)//2
+            cly = ly + (lh - l_img.height)//2
             frame.alpha_composite(l_img, (clx, cly))
 
     def draw_nesine_area_gt(self, frame, box_bounds, logo_bounds, scale):
