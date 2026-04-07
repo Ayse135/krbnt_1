@@ -29,8 +29,18 @@ class UEFA1200(BaseLayout):
         p2_scale = self.overrides.get("player_2_scale", self.overrides.get("player_scale", 1.0))
         
         players_data = [
-            {"path": data.get("player_1_path"), "center_x": 172, "target_y": 133, "scale_adj": p1_scale},
-            {"path": data.get("player_2_path"), "center_x": 1037, "target_y": 131, "scale_adj": p2_scale}
+            {
+                "path": data.get("player_1_path"), 
+                "center_x": 172 + int(self.overrides.get("player_1_x_offset", 0)), 
+                "target_y": 133 + int(self.overrides.get("player_1_y_offset", 0)), 
+                "scale_adj": p1_scale
+            },
+            {
+                "path": data.get("player_2_path"), 
+                "center_x": 1037 + int(self.overrides.get("player_2_x_offset", 0)), 
+                "target_y": 131 + int(self.overrides.get("player_2_y_offset", 0)), 
+                "scale_adj": p2_scale
+            }
         ]
 
         for p in players_data:
@@ -41,9 +51,19 @@ class UEFA1200(BaseLayout):
         # 4. Takım Logoları (Geniş Atmosferik Işıma)
         # PSD Logolar: Left (347, 225), Right (850, 229)
         l_y_override = self.overrides.get("logo_y", 225)
+        l_y_off = int(self.overrides.get("logo_y_offset", 0))
+        
         logos_data = [
-            {"path": data.get("logo_1_path"), "center": (347, l_y_override), "max_size": (185, 210)},
-            {"path": data.get("logo_2_path"), "center": (850, l_y_override + 4), "max_size": (175, 210)}
+            {
+                "path": data.get("logo_1_path"), 
+                "center": (347 + int(self.overrides.get("logo_1_x_offset", 0)), l_y_override + l_y_off), 
+                "max_size": (int(185 * float(self.overrides.get("logo_1_scale", 1.0))), int(210 * float(self.overrides.get("logo_1_scale", 1.0))))
+            },
+            {
+                "path": data.get("logo_2_path"), 
+                "center": (850 + int(self.overrides.get("logo_2_x_offset", 0)), l_y_override + 4 + l_y_off), 
+                "max_size": (int(175 * float(self.overrides.get("logo_2_scale", 1.0))), int(210 * float(self.overrides.get("logo_2_scale", 1.0))))
+            }
         ]
 
         for l in logos_data:
@@ -60,19 +80,23 @@ class UEFA1200(BaseLayout):
             f_saira_cond = "/Users/ayseguler/Documents/vs_projeler/Karbonat/kick-grok/fonts/uefa/Saira_UltraCondensed-Bold.ttf"
             
             if title:
-                # Dinamik başlık çizimi
-                t_y = self.overrides.get("title_y", 30)
+                # Dinamik başlık çizimi: match_title_y (absolute) or match_title_y_offset
+                t_y = self.overrides.get("match_title_y", self.overrides.get("title_y", 30)) + int(self.overrides.get("match_title_y_offset", 0))
                 self.draw_dynamic_title(draw, title, f_saira_cond, max_width=1000, start_y=t_y)
             
-            # Day & Hour
+            # Day & Hour: Positional and FS Control
             day_text = data.get('day', 'Pazartesi').capitalize()
             hour_text = data.get('hour', '20:30')
             
             fs_info = self.overrides.get("match_info_fs", 88)
             font_info = ImageFont.truetype(f_saira_cond, fs_info)
             
-            day_y = self.overrides.get("day_y", 130)
-            hour_y = self.overrides.get("hour_y", 205)
+            dy_off = int(self.overrides.get("day_y_offset", 0))
+            hy_off = int(self.overrides.get("hour_y_offset", 0))
+            info_y_off = int(self.overrides.get("match_info_y_offset", 0))
+
+            day_y = self.overrides.get("day_y", 130) + dy_off + info_y_off
+            hour_y = self.overrides.get("hour_y", 205) + hy_off + info_y_off
             
             draw.text(((width - draw.textlength(day_text, font=font_info)) // 2, day_y), day_text, font=font_info, fill="#06BF50")
             draw.text(((width - draw.textlength(hour_text, font=font_info)) // 2, hour_y), hour_text, font=font_info, fill="white")

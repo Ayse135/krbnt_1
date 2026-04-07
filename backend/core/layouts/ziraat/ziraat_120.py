@@ -93,17 +93,24 @@ class Ziraat120(ZiraatBase):
             p_final.paste(p_bg, (0, 0), p_mask)
             p_final.paste(p_img, (0, 0), p_mask)
             
-            px_final = int(lx+2 * scale - (target_size[0]-mask_size[0])//2)
-            py_final = int(ly+2 * scale - (target_size[1]-mask_size[1])//2)
+            px_final = int(lx+2 * scale - (target_size[0]-mask_size[0])//2) + int(self.overrides.get(f"player_{index}_x_offset", 0)) * scale
+            py_final = int(ly+2 * scale - (target_size[1]-mask_size[1])//2) + int(self.overrides.get(f"player_{index}_y_offset", 0)) * scale
             canvas.alpha_composite(p_final, (px_final, py_final))
 
-        # Logo Overlap
+        # Logo Control: Scale and Offset
         l_path = data.get(f"logo_{index}_path")
         if l_path and os.path.exists(l_path):
             l_img = Image.open(l_path).convert("RGBA")
-            l_img.thumbnail((logo_bounds[2], logo_bounds[3]), Image.Resampling.LANCZOS)
-            clx = logo_bounds[0] + (logo_bounds[2] - l_img.width)//2
-            cly = logo_bounds[1] + (logo_bounds[3] - l_img.height)//2
+            
+            l_scale = float(self.overrides.get(f"logo_{index}_scale", 1.0))
+            lw_final, lh_final = int(logo_bounds[2] * l_scale), int(logo_bounds[3] * l_scale)
+            l_img.thumbnail((lw_final, lh_final), Image.Resampling.LANCZOS)
+            
+            lx_off = int(self.overrides.get(f"logo_{index}_x_offset", 0)) * scale
+            ly_off = int(self.overrides.get("logo_y_offset", 0)) * scale
+            
+            clx = logo_bounds[0] + (logo_bounds[2] - l_img.width)//2 + lx_off
+            cly = logo_bounds[1] + (logo_bounds[3] - l_img.height)//2 + ly_off
             canvas.alpha_composite(l_img, (clx, cly))
 
     def draw_match_typography_vertical(self, canvas, data, bounds, scale):
@@ -149,22 +156,32 @@ class Ziraat120(ZiraatBase):
                     ds += 0.5
                     f_day = ImageFont.truetype(f_reg, int(ds * scale))
             
-            # Team 1
-            # Team 1
+            # Team Positioning with Offsets
+            t1_x_off = int(self.overrides.get("team_1_x_offset", 0)) * scale
+            t2_x_off = int(self.overrides.get("team_2_x_offset", 0)) * scale
+            t_y_off = int(self.overrides.get("team_name_y_offset", 0)) * scale
+            
             tw1 = draw.textlength(t1, font=f_team1)
-            draw.text((bx + (bw - tw1)//2, by), t1, font=f_team1, fill="black")
+            draw.text((bx + (bw - tw1)//2 + t1_x_off, by + t_y_off), t1, font=f_team1, fill="black")
             # Team 2
             tw2 = draw.textlength(t2, font=f_team2)
-            draw.text((bx + (bw - tw2)//2, by + 24 * scale), t2, font=f_team2, fill="black")
+            draw.text((bx + (bw - tw2)//2 + t2_x_off, by + 24 * scale + t_y_off), t2, font=f_team2, fill="black")
             
-            # Date Area (Y=372 from plan)
-            iy = 372 * scale
+            # Date Area: FS and Position Control
+            info_fs = self.overrides.get("match_info_fs", 24)
+            f_hour = ImageFont.truetype(f_reg, int(info_fs * scale))
+            hw = draw.textlength(hour, font=f_hour)
+            
+            iy = (372 + self.overrides.get("match_info_y_offset", 0)) * scale
+            ix_off = int(self.overrides.get("match_info_x_offset", 0)) * scale
+            
             # Draw Hour
-            draw.text((bx + (bw - hw)//2, iy), hour, font=f_hour, fill="black")
+            draw.text((bx + (bw - hw)//2 + ix_off, iy), hour, font=f_hour, fill="black")
             # Draw Day
             dw = draw.textlength(day, font=f_day)
-            draw.text((bx + (bw - dw)//2, iy + 25 * scale), day, font=f_day, fill="black")
-        except: pass
+            draw.text((bx + (bw - dw)//2 + ix_off, iy + 25 * scale), day, font=f_day, fill="black")
+        except Exception as e:
+            print(f"Vertical Typography Error: {e}")
 
     def draw_nesine_area_vertical(self, canvas, box_bounds, logo_bounds, scale):
         bx, by, bw, bh = box_bounds

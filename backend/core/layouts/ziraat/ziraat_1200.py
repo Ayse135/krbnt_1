@@ -91,18 +91,27 @@ class Ziraat1200(ZiraatBase):
         draw = ImageDraw.Draw(canvas)
         draw.rectangle([lx, ly, lx+lw, ly+lh], outline="black", width=3)
         
-        # C. Player Image (Enlarged head / Scaled up)
+        # C. Player Image (Enlarged head / Scaled up with Overrides)
         if p_path and os.path.exists(p_path):
             p_img_orig = Image.open(p_path).convert("RGBA")
-            # Zoom logic: Resize so width is 1.5x of mask width to make head much larger (closer look)
-            zoom = 1.5
-            new_w = int(mask_size[0] * zoom)
+            
+            # Dynamic Scale and Offsets
+            p_scale = float(self.overrides.get(f"player_{index}_scale", 1.5))
+            px_off = int(self.overrides.get(f"player_{index}_x_offset", 0))
+            py_off = int(self.overrides.get(f"player_{index}_y_offset", 0))
+            
+            new_w = int(mask_size[0] * p_scale)
             new_h = int(p_img_orig.height * (new_w / p_img_orig.width))
             p_img_scaled = p_img_orig.resize((new_w, new_h), Image.Resampling.LANCZOS)
             
-            # Crop to mask_size, centering horizontally and shifting up slightly
-            left = (new_w - mask_size[0]) // 2
-            top = 0 # Head at top
+            # Crop to mask_size, with offsets
+            left = (new_w - mask_size[0]) // 2 - px_off
+            top = -py_off # Positive shifts up by convention or crop
+            
+            # Bounds check
+            left = max(0, min(left, new_w - mask_size[0]))
+            top = max(0, min(top, new_h - mask_size[1]))
+            
             p_img_cropped = p_img_scaled.crop((left, top, left + mask_size[0], top + mask_size[1]))
             
             p_final = Image.new("RGBA", mask_size, (0, 0, 0, 0))
@@ -113,10 +122,20 @@ class Ziraat1200(ZiraatBase):
         l_path = data.get(f"logo_{index}_path")
         if l_path and os.path.exists(l_path):
             l_img = Image.open(l_path).convert("RGBA")
-            l_img.thumbnail((logo_bounds[2], logo_bounds[3]), Image.Resampling.LANCZOS)
-            # Center the logo within its box
-            clx = logo_bounds[0] + (logo_bounds[2] - l_img.width)//2
-            cly = logo_bounds[1] + (logo_bounds[3] - l_img.height)//2
+            
+            # Logo Scaling
+            l_scale = float(self.overrides.get(f"logo_{index}_scale", 1.0))
+            target_w = int(logo_bounds[2] * l_scale)
+            target_h = int(logo_bounds[3] * l_scale)
+            l_img.thumbnail((target_w, target_h), Image.Resampling.LANCZOS)
+            
+            # Logo Offsets
+            lx_off = int(self.overrides.get(f"logo_{index}_x_offset", 0))
+            ly_off = int(self.overrides.get("logo_y_offset", 0))
+            
+            # Center the logo within its box, then apply offsets
+            clx = logo_bounds[0] + (logo_bounds[2] - l_img.width)//2 + lx_off
+            cly = logo_bounds[1] + (logo_bounds[3] - l_img.height)//2 + ly_off
             canvas.alpha_composite(l_img, (clx, cly))
 
     def draw_match_typography(self, canvas, data, bounds):
@@ -125,41 +144,57 @@ class Ziraat1200(ZiraatBase):
         try:
             t1, t2 = data.get("team_1", "TEAM 1").upper(), data.get("team_2", "TEAM 2").upper()
             
-            # Start at 72px or override
-            fs = self.overrides.get("team_name_fs", 72)
+            # Team Names: FS and Y Offsets
+            orig_fs = 72
+            fs = self.overrides.get("team_name_fs", orig_fs)
             font_team = ImageFont.truetype(self.font_bold, fs)
             
-            # Shrink-to-fit logic: If either name is wider than bw, scale down fs
+            # Dynamic Y-positioning
+            # ty uses by as anchor, with optional match_title_y_offset / team_name_y_offset
+            ty = self.overrides.get("team_name_y", by + 190) + int(self.overrides.get("team_name_y_offset", 0))
+
+            # Shrink-to-fit logic
             while (draw.textlength(t1, font=font_team) > bw or draw.textlength(t2, font=font_team) > bw) and fs > 40:
                 fs -= 2
                 font_team = ImageFont.truetype(self.font_bold, fs)
             
-            # Use title_y if provided, else use default 'by'
-            ty = self.overrides.get("title_y", by)
-            
-            # Draw both with exact same width (bw)
+            # Draw with spacing / center logic
             self.draw_text_with_spacing(draw, t1, (bx, ty), font_team, fill="black", target_width=bw)
             self.draw_text_with_spacing(draw, t2, (bx, ty + fs + 5), font_team, fill="black", target_width=bw)
             
-        except: pass
+            # --- MAIN MATCH TITLE (headline) ---
+            title = data.get("match_title", "MAÇ BAŞLIYOR").upper()
+            mt_fs = self.overrides.get("match_title_fs", 28)
+            mt_y_off = int(self.overrides.get("match_title_y_offset", 0))
+            mt_x_off = int(self.overrides.get("match_title_x_offset", 0))
+            font_title = ImageFont.truetype(self.font_reg, mt_fs)
+            tw_title = draw.textlength(title, font=font_title)
+            # Standard PSD position (y=40 relative to bounds)
+            draw.text((bx + (bw - tw_title)//2 + mt_x_off, by + 40 + mt_y_off), title, font=font_title, fill=(30, 30, 30, 255))
+            
+        except Exception as e:
+            print(f"Typography Error: {e}")
 
     def draw_match_info_boxes(self, canvas, data, bounds):
         bx, by, bw, bh = bounds
         draw = ImageDraw.Draw(canvas)
         try:
-            # Match Info using the same family but Regular
+            # Match Info: FS and Position Dynamic Control
             fs_info = self.overrides.get("match_info_fs", 40)
             font_info = ImageFont.truetype(self.font_reg, fs_info)
             hour, day = data.get("hour", "20:30"), data.get("day", "PAZARTESİ").upper()
             
-            info_y = self.overrides.get("match_info_y", by)
+            # Positional Control
+            info_y = self.overrides.get("match_info_y", by) + int(self.overrides.get("match_info_y_offset", 0))
+            info_x_off = int(self.overrides.get("match_info_x_offset", 0))
             
             tw1 = draw.textlength(hour, font=font_info)
-            draw.text((bx + (bw - tw1)//2, info_y), hour, font=font_info, fill="black")
+            draw.text((bx + (bw - tw1)//2 + info_x_off, info_y), hour, font=font_info, fill="black")
             
             tw2 = draw.textlength(day, font=font_info)
-            draw.text((bx + (bw - tw2)//2, info_y + fs_info + 5), day, font=font_info, fill="black")
-        except: pass
+            draw.text((bx + (bw - tw2)//2 + info_x_off, info_y + fs_info + 5), day, font=font_info, fill="black")
+        except Exception as e:
+            print(f"Info Box Error: {e}")
 
     def draw_nesine_area(self, canvas, bounds):
         bx, by, bw, bh = bounds
