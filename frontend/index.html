@@ -221,7 +221,12 @@
                                 <option value="GALATASARAY">Galatasaray</option>
                                 <option value="FENERBAHÇE">Fenerbahçe</option>
                                 <option value="TRABZONSPOR">Trabzonspor</option>
+                                <option value="BAŞAKŞEHİR">Başakşehir</option>
+                                <option value="SAMSUNSPOR">Samsunspor</option>
+                                <option value="GAZİANTEP FK">Gaziantep FK</option>
                                 <option value="RİZESPOR">Rizespor</option>
+                                <option value="ANTALYASPOR">Antalyaspor</option>
+                                <option value="EYÜPSPOR">Eyüpspor</option>
                             </select>
                             <span class="font-black text-gray-400 text-sm">VS</span>
                             <select id="team_2" name="team_2"
@@ -230,7 +235,12 @@
                                 <option value="BEŞİKTAŞ">Beşiktaş</option>
                                 <option value="FENERBAHÇE" selected>Fenerbahçe</option>
                                 <option value="TRABZONSPOR">Trabzonspor</option>
+                                <option value="BAŞAKŞEHİR">Başakşehir</option>
                                 <option value="SAMSUNSPOR">Samsunspor</option>
+                                <option value="GAZİANTEP FK">Gaziantep FK</option>
+                                <option value="RİZESPOR">Rizespor</option>
+                                <option value="ANTALYASPOR">Antalyaspor</option>
+                                <option value="EYÜPSPOR">Eyüpspor</option>
                             </select>
                         </div>
                     </div>
@@ -253,9 +263,11 @@
                             <select id="player_1_id" name="player_1_id"
                                 class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow block w-full p-3 shadow-sm font-semibold transition">
                                 <option value="1">Player 1</option>
-                                <option value="4" selected>Player 4</option>
-                                <option value="3">Player 3</option>
                                 <option value="2">Player 2</option>
+                                <option value="3">Player 3</option>
+                                <option value="4" selected>Player 4</option>
+                                <option value="5">Player 5</option>
+                                <option value="6">Player 6</option>
                             </select>
                         </div>
                         <div>
@@ -264,9 +276,11 @@
                                 2 (R)</label>
                             <select id="player_2_id" name="player_2_id"
                                 class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-nesine-yellow focus:border-nesine-yellow block w-full p-3 shadow-sm font-semibold transition">
-                                <option value="2" selected>Player 2</option>
-                                <option value="5">Player 5</option>
                                 <option value="1">Player 1</option>
+                                <option value="2" selected>Player 2</option>
+                                <option value="3">Player 3</option>
+                                <option value="4">Player 4</option>
+                                <option value="5">Player 5</option>
                                 <option value="6">Player 6</option>
                             </select>
                         </div>
@@ -400,13 +414,13 @@
                                     class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded border border-blue-200 uppercase tracking-tighter shadow-sm">1200x628</span>
                                 <div class="flex items-center gap-1">
                                     <select id="mode_1200x628" onchange="toggleModelSelector('1200x628')"
-                                        class="bg-gray-50 border-none text-[9px] font-bold text-gray-500 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer hover:bg-gray-100 transition">
+                                        class="bg-gray-100/50 border border-none text-xs font-bold text-gray-600 rounded-lg px-2 py-2 focus:ring-0 cursor-pointer hover:bg-gray-100 transition">
                                         <option value="standard">Standard (Default)</option>
                                         <option value="layout">Layout Only (Hybrid)</option>
                                         <option value="creative">Creative (Imagen)</option>
                                     </select>
                                     <select id="model_1200x628"
-                                        class="hidden bg-gray-100/50 border-none text-[8px] font-black text-gray-400 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer hover:bg-gray-200 transition uppercase tracking-tighter">
+                                        class="hidden bg-nesine-yellow/10 border border-none text-xs font-black text-gray-600 rounded-lg px-2 py-2 focus:ring-0 cursor-pointer hover:bg-nesine-yellow/20 transition uppercase tracking-tighter">
                                         <option value="gemini-3-pro-image-preview">Nano Banana Pro</option>
                                         <option value="imagen-4.0-generate-001">Imagen 4.0 Ultra</option>
                                     </select>
@@ -489,13 +503,13 @@
                                     class="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded border border-green-200 uppercase tracking-tighter">120x600</span>
                                 <div class="flex items-center gap-1">
                                     <select id="mode_120x600" onchange="toggleModelSelector('120x600')"
-                                        class="bg-gray-50 border-none text-[9px] font-bold text-gray-500 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer hover:bg-gray-100 transition">
+                                        class="bg-gray-100/50 border border-none text-xs font-bold text-gray-600 rounded-lg px-2 py-2 focus:ring-0 cursor-pointer hover:bg-gray-100 transition">
                                         <option value="standard">Standard (Default)</option>
                                         <option value="layout">Layout Only (Hybrid)</option>
                                         <option value="creative">Creative (Imagen)</option>
                                     </select>
                                     <select id="model_120x600"
-                                        class="hidden bg-gray-100/50 border-none text-[8px] font-black text-gray-400 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer hover:bg-gray-200 transition uppercase tracking-tighter">
+                                        class="hidden bg-nesine-yellow/10 border border-none text-xs font-black text-gray-700 rounded-lg px-2 py-2 focus:ring-0 cursor-pointer hover:bg-nesine-yellow/20 transition uppercase tracking-tighter">
                                         <option value="gemini-3-pro-image-preview">Nano Banana Pro</option>
                                         <option value="imagen-4.0-generate-001">Imagen 4.0 Ultra</option>
                                     </select>
@@ -578,13 +592,13 @@
                                     class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded border border-purple-200 uppercase tracking-tighter">320x100</span>
                                 <div class="flex items-center gap-1">
                                     <select id="mode_320x100" onchange="toggleModelSelector('320x100')"
-                                        class="bg-gray-50 border-none text-[9px] font-bold text-gray-500 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer hover:bg-gray-100 transition">
+                                        class="bg-gray-100/50 border border-none text-xs font-bold text-gray-600 rounded-lg px-2 py-2 focus:ring-0 cursor-pointer hover:bg-gray-100 transition">
                                         <option value="standard">Standard (Default)</option>
                                         <option value="layout">Layout Only (Hybrid)</option>
                                         <option value="creative">Creative (Imagen)</option>
                                     </select>
                                     <select id="model_320x100"
-                                        class="hidden bg-gray-100/50 border-none text-[8px] font-black text-gray-400 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer hover:bg-gray-200 transition uppercase tracking-tighter">
+                                        class="hidden bg-nesine-yellow/10 border border-none text-xs font-black text-gray-700 rounded-lg px-2 py-2 focus:ring-0 cursor-pointer hover:bg-nesine-yellow/20 transition uppercase tracking-tighter">
                                         <option value="gemini-3-pro-image-preview">Nano Banana Pro</option>
                                         <option value="imagen-4.0-generate-001">Imagen 4.0 Ultra</option>
                                     </select>
@@ -661,13 +675,13 @@
                                     class="bg-pink-100 text-pink-700 text-[10px] font-black px-2 py-0.5 rounded border border-pink-200 uppercase tracking-tighter">300x50</span>
                                 <div class="flex items-center gap-1">
                                     <select id="mode_300x50" onchange="toggleModelSelector('300x50')"
-                                        class="bg-gray-50 border-none text-[9px] font-bold text-gray-500 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer hover:bg-gray-100 transition">
+                                        class="bg-gray-100/50 border border-none text-xs font-bold text-gray-600 rounded-lg px-2 py-2 focus:ring-0 cursor-pointer hover:bg-gray-100 transition">
                                         <option value="standard">Standard (Default)</option>
                                         <option value="layout">Layout Only (Hybrid)</option>
                                         <option value="creative">Creative (Imagen)</option>
                                     </select>
                                     <select id="model_300x50"
-                                        class="hidden bg-gray-100/50 border-none text-[8px] font-black text-gray-400 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer hover:bg-gray-200 transition uppercase tracking-tighter">
+                                        class="hidden bg-nesine-yellow/10 border border-none text-xs font-black text-gray-700 rounded-lg px-2 py-2 focus:ring-0 cursor-pointer hover:bg-nesine-yellow/20 transition uppercase tracking-tighter">
                                         <option value="gemini-3-pro-image-preview">Nano Banana Pro</option>
                                         <option value="imagen-4.0-generate-001">Imagen 4.0 Ultra</option>
                                     </select>
@@ -833,15 +847,18 @@
                     throw new Error(data.error || `${size} generation failed`);
                 }
 
-                // Update Image
+                // Update Image info for download logic
                 const urlObj = new URL(data.imageUrl, window.location.origin);
                 const realFilename = urlObj.pathname.split('/').pop();
                 targetImg.setAttribute('data-filename', realFilename);
 
                 // Force cache break with timestamp
-                targetImg.src = data.imageUrl + '?t=' + new Date().getTime();
+                const fullUrl = data.imageUrl + '?t=' + new Date().getTime();
+                
+                // Ensure visible before setting src (Firefox fix)
                 targetImg.classList.remove('hidden');
                 targetEmpty.classList.add('hidden');
+                targetImg.src = fullUrl;
 
                 addLog(`✓ ${size} Response Received. Successfully saved to ${realFilename}`, 'success');
                 if (data.info) addLog(`AI Output: ${data.info}`, 'info');

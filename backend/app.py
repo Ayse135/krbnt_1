@@ -54,14 +54,16 @@ async def generate_banner(
     try:
         # Logo haritalama (Basit versiyon)
         logo_map = {
-            "BEŞİKTAŞ": "1",
-            "GALATASARAY": "2",
-            "FENERBAHÇE": "3",
-            "TRABZONSPOR": "4",
-            "BAŞAKŞEHİR": "5",
+            "BEŞİKTAŞ": "4",
+            "GALATASARAY": "6",
+            "FENERBAHÇE": "1",
+            "TRABZONSPOR": "3",
+            "BAŞAKŞEHİR": "2",
             "SAMSUNSPOR": "6",
             "GAZİANTEP FK": "1",
-            "RİZESPOR": "4"
+            "RİZESPOR": "3",
+            "ANTALYASPOR": "5",
+            "EYÜPSPOR": "5"
         }
         
         l1_id = logo_map.get(team_1.upper(), "1")
